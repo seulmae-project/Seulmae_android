@@ -1,0 +1,42 @@
+name: sm3
+description: "A new Flutter project."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=2.12.0 <3.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  provider: ^6.0.0
+  shared_preferences: ^2.0.9
+  table_calendar: ^3.0.0
+  http: ^0.13.3
+  flutter_localizations:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.6
+  image_picker: ^0.8.4+4
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/app_splash.png
+    - assets/certi_kakao_login.png
+    - assets/default_profile_image.png
+    - assets/profile_image_1.png
+
+flutter_native_splash:
+  color: "#42a5f5"
+  image: assets/app_splash.png
+  android: true
+  ios: true

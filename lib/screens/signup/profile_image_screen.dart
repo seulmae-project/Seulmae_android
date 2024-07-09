@@ -75,7 +75,7 @@ class _ProfileImageScreenState extends State<ProfileImageScreen> {
                       fit: BoxFit.cover,
                     )
                         : DecorationImage(
-                      image: AssetImage('assets/default_profile_image.png'),
+                      image: AssetImage('assets/profile_image_1.png'),
                       fit: BoxFit.cover,
                     ),
                   ),

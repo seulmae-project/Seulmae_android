@@ -32,7 +32,6 @@ flutter:
   assets:
     - assets/app_splash.png
     - assets/certi_kakao_login.png
-    - assets/default_profile_image.png
     - assets/profile_image_1.png
 
 flutter_native_splash:

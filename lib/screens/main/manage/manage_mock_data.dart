@@ -2,9 +2,9 @@ import 'dart:math';
 
 final List<Map<String, dynamic>> morningShiftData = _generateRandomWorkData(
   [
-    {'name': '김철수', 'workplace': '근무지 A', 'role': 'manager'},
-    {'name': '박영희', 'workplace': '근무지 B', 'role': 'employee'},
-    {'name': '최민호', 'workplace': '근무지 C', 'role': 'manager'},
+    {'name': '김철수', 'workplace': '근무지 A', 'role': 'employee', 'uid': '1'},
+    {'name': '박영희', 'workplace': '근무지 B', 'role': 'employee', 'uid': '2'},
+    {'name': '최민호', 'workplace': '근무지 C', 'role': 'manager', 'uid': '3'},
   ],
   startDate: '2024-06-21',
   endDate: '2024-07-01',
@@ -12,7 +12,7 @@ final List<Map<String, dynamic>> morningShiftData = _generateRandomWorkData(
 
 final List<Map<String, dynamic>> afternoonShiftData = _generateRandomWorkData(
   [
-    {'name': '이민수', 'workplace': '근무지 A', 'role': 'manager'},
+    {'name': '이민수', 'workplace': '근무지 A', 'role': 'employee'},
     {'name': '최수영', 'workplace': '근무지 B', 'role': 'employee'},
     {'name': '이수민', 'workplace': '근무지 C', 'role': 'manager'},
   ],
@@ -28,11 +28,11 @@ List<Map<String, dynamic>> _generateRandomWorkData(
   final List<Map<String, dynamic>> workData = [];
   final List<String> profileImages = [
     'assets/images/profile_image_1.png',
-    'assets/images/profile_image_2.png',
-    'assets/images/profile_image_3.png',
-    'assets/images/profile_image_4.png',
-    'assets/images/profile_image_5.png',
-    'assets/images/profile_image_6.png',
+    'assets/images/profile_image_1.png',
+    'assets/images/profile_image_1.png',
+    'assets/images/profile_image_1.png',
+    'assets/images/profile_image_1.png',
+    'assets/images/profile_image_1.png',
   ];
 
   DateTime start = DateTime.parse(startDate);

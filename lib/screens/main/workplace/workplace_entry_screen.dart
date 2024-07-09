@@ -6,19 +6,19 @@ import '../main_screen.dart';
 // 예시로 사용할 근무지 목록
 List<Workplace> workplaces = [
   Workplace(
-    name: '근무지 1',
+    name: '근무지 A',
     phoneNumber: '010-1234-5678',
     address: '서울특별시 강남구',
     profileImagePath: 'assets/profile_image_1.png',
   ),
   Workplace(
-    name: '근무지 2',
+    name: '근무지 B',
     phoneNumber: '02-9876-5432',
     address: '경기도 성남시 분당구',
     profileImagePath: 'assets/profile_image_1.png',
   ),
   Workplace(
-    name: '근무지 3',
+    name: '근무지 C',
     phoneNumber: '031-1111-2222',
     address: '인천광역시 남구',
     profileImagePath: 'assets/profile_image_1.png',

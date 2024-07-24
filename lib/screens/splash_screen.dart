@@ -13,7 +13,10 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _redirectToNextScreen();
+    // 빌드가 완료된 후에 _redirectToNextScreen을 호출합니다.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _redirectToNextScreen();
+    });
   }
 
   void _redirectToNextScreen() async {

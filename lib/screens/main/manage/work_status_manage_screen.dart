@@ -183,8 +183,15 @@ class _ManagerWorkStatusScreenState extends State<ManagerWorkStatusScreen> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(16.0),
                       decoration: BoxDecoration(
-                        color: Colors.grey[200],
-                        border: Border.all(color: Colors.grey),
+                        color: Colors.white,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.3),
+                            spreadRadius: 3,
+                            blurRadius: 7,
+                            offset: Offset(0, 3),
+                          ),
+                        ],
                         borderRadius: BorderRadius.circular(16.0),
                       ),
                       child: Column(

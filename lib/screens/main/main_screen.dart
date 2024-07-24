@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../providers/auth_provider.dart';
 import 'app_state.dart';
 import 'employee/employee_dashboard_screen.dart';
 import 'employee/work_status_screen.dart';
 import 'manage/manage_dashboard_screen.dart';
 import 'manage/work_status_manage_screen.dart';
 import 'settings_screen.dart';
-import 'user_roles.dart';
 
 class MainScreen extends StatelessWidget {
   final List<Widget> _employeeOptions = <Widget>[
@@ -24,12 +24,11 @@ class MainScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
+    final authProvider = Provider.of<AuthProvider>(context);
 
-    // For testing purposes, set the current user
-    appState.setCurrentUser(testUser); // Change to testUser2 for testing testUser2
-
-    final List<Widget> _widgetOptions =
-    appState.userRole == 'manager' ? _managerOptions : _employeeOptions;
+    final List<Widget> _widgetOptions = authProvider.userRole == 'manager'
+        ? _managerOptions
+        : _employeeOptions;
 
     return Scaffold(
       body: IndexedStack(

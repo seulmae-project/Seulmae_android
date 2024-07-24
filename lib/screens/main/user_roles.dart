@@ -21,8 +21,8 @@ final User testUser2 = User(
   id: 'test2',
   name: 'Test User 2',
   roles: {
-    '근무지 A': 'manager',
-    '근무지 B': 'manager',
+    '근무지 A': 'employee',
+    '근무지 B': 'employee',
     '근무지 C': 'manager',
   },
 );

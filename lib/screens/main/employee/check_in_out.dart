@@ -44,8 +44,8 @@ class CheckInOut extends ChangeNotifier {
 
     _workStartTime = DateTime.parse(workTime['worktime'].split('~')[0]);
     _workEndTime = DateTime.parse(workTime['worktime'].split('~')[1]);
-    hourlyWage = workTime['hourlyWage'];  // 시급 정보를 가져옵니다.
-    workplace = workTime['workplace'];  // 근무지 정보를 가져옵니다.
+    hourlyWage = workTime['hourlyWage'];
+    workplace = workTime['workplace'];
 
     if (now.isBefore(_workStartTime.subtract(Duration(minutes: 10)))) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -113,6 +113,7 @@ class CheckInOut extends ChangeNotifier {
       },
     );
   }
+
   void _showRegisterWorkDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -130,10 +131,6 @@ class CheckInOut extends ChangeNotifier {
             TextButton(
               child: Text('예'),
               onPressed: () {
-                print('CheckInTime: $_checkInTime');
-                print('CheckOutTime: $_checkOutTime');
-                print('HourlyWage: $hourlyWage');
-                print('Workplace: $workplace');
                 Navigator.of(context).pop();
                 Navigator.push(
                   context,
@@ -142,7 +139,7 @@ class CheckInOut extends ChangeNotifier {
                       checkInTime: _checkInTime,
                       checkOutTime: _checkOutTime,
                       hourlyWage: hourlyWage,
-                      workplace: workplace,  // 근무지 정보를 전달합니다.
+                      workplace: workplace,
                     ),
                   ),
                 );
@@ -153,5 +150,4 @@ class CheckInOut extends ChangeNotifier {
       },
     );
   }
-
 }

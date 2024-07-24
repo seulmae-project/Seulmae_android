@@ -28,7 +28,18 @@ class CheckInOutWidget extends StatelessWidget {
             if (checkInOut.isCheckedIn)
               Container(
                 padding: EdgeInsets.all(16.0),
-                color: Colors.blue.shade100,
+                margin: EdgeInsets.symmetric(vertical: 8.0),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10.0),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 6.0,
+                      spreadRadius: 2.0,
+                    ),
+                  ],
+                ),
                 child: Column(
                   children: [
                     Row(
@@ -90,7 +101,7 @@ class CheckInOutWidget extends StatelessWidget {
                             checkInTime: checkInOut.checkInTime,
                             checkOutTime: checkInOut.checkOutTime,
                             hourlyWage: checkInOut.hourlyWage,
-                            workplace: checkInOut.workplace, // 여기에 적절한 workplace 값을 넣습니다.
+                            workplace: checkInOut.workplace,
                           ),
                         ),
                       );

@@ -3,21 +3,23 @@ import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import '../employee_detail_screen.dart';
+import '../notification/notification_screen.dart';
 import '../workplace/workplace.dart';
 import '../workplace/workplace_entry_screen.dart';
 import '../app_state.dart';
 import '../workplace/workplace_management_screen.dart';
-import 'check_in_out.dart';  // 새로 추가된 파일을 임포트
-import 'check_in_out_widget.dart';  // 새로 추가된 파일을 임포트
+import 'check_in_out.dart';
+import 'check_in_out_widget.dart';
 
-// notices 정의
+// 공지사항 목록 정의
 final List<String> notices = [
   '공지사항 1',
   '공지사항 2',
   '공지사항 3',
 ];
 
-// _holidays 정의
+// 휴일 목록 정의
 final Map<DateTime, List<String>> _holidays = {
   DateTime.utc(2024, 1, 1): ['New Year\'s Day'],
   DateTime.utc(2024, 3, 1): ['삼일절'],
@@ -28,16 +30,50 @@ final Map<DateTime, List<String>> _holidays = {
   DateTime.utc(2024, 12, 25): ['Christmas Day'],
 };
 
+// 일별 금액 정의
+final Map<DateTime, int> dailyAmounts = {
+  DateTime.utc(2024, 7, 1): 20000,
+  DateTime.utc(2024, 7, 2): 20000,
+  DateTime.utc(2024, 7, 3): 20000,
+  DateTime.utc(2024, 7, 4): 20000,
+  DateTime.utc(2024, 7, 5): 0,
+  DateTime.utc(2024, 7, 6): 0,
+  DateTime.utc(2024, 7, 7): 0,
+  DateTime.utc(2024, 7, 8): 10000,
+  DateTime.utc(2024, 7, 9): 20000,
+  DateTime.utc(2024, 7, 10): 50000,
+  DateTime.utc(2024, 7, 11): 11000,
+  DateTime.utc(2024, 7, 12): 11000,
+  DateTime.utc(2024, 7, 14): 0,
+  DateTime.utc(2024, 7, 15): 50000,
+  DateTime.utc(2024, 7, 16): 20000,
+  DateTime.utc(2024, 7, 17): 20000,
+  DateTime.utc(2024, 7, 18): 20000,
+  DateTime.utc(2024, 7, 19): 20000,
+  DateTime.utc(2024, 7, 20): 20000,
+  DateTime.utc(2024, 7, 21): 20000,
+  DateTime.utc(2024, 7, 22): 20000,
+  DateTime.utc(2024, 7, 23): 20000,
+  DateTime.utc(2024, 7, 24): 50000,
+  DateTime.utc(2024, 7, 25): 50000,
+  DateTime.utc(2024, 7, 26): 20000,
+  DateTime.utc(2024, 7, 27): 20000,
+  DateTime.utc(2024, 7, 28): 20000,
+  DateTime.utc(2024, 7, 29): 20000,
+  DateTime.utc(2024, 7, 30): 20000,
+  DateTime.utc(2024, 7, 31): 1000,
+};
+
 class EmployeeDashboardScreen extends StatefulWidget {
   const EmployeeDashboardScreen({Key? key}) : super(key: key);
 
   @override
-  _EmployeeDashboardScreenState createState() => _EmployeeDashboardScreenState();
+  _EmployeeDashboardScreenState createState() =>
+      _EmployeeDashboardScreenState();
 }
 
 class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
   DateTime? _currentBackPressTime;
-  CalendarFormat _calendarFormat = CalendarFormat.month;
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
   PageController _pageController = PageController();
@@ -96,116 +132,160 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
         },
         child: Scaffold(
           appBar: AppBar(
-            title: const Text('메인'),
+            title: Text(
+              appState.selectedWorkplace,
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+            ),
             automaticallyImplyLeading: false,
             actions: [
-              PopupMenuButton<Workplace>(
-                onSelected: (Workplace selectedWorkplace) {
-                  if (selectedWorkplace.name == '근무지 설정') {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => WorkplaceManagementScreen(workplaces: workplaces),
-                      ),
-                    );
-                  } else {
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      appState.setSelectedWorkplace(selectedWorkplace.name);
-                    });
-                  }
-                },
-                itemBuilder: (BuildContext context) {
-                  return [
-                    ...workplaces.map((Workplace workplace) {
-                      return PopupMenuItem<Workplace>(
-                        value: workplace,
-                        child: Text(workplace.name),
-                      );
-                    }).toList(),
-                    PopupMenuItem<Workplace>(
-                      value: Workplace(name: '근무지 설정', phoneNumber: '', address: '', profileImagePath: ''),
-                      child: Text('근무지 설정'),
+              TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          WorkplaceManagementScreen(workplaces: workplaces),
                     ),
-                  ];
+                  );
+                },
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  backgroundColor: Colors.blueAccent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                ),
+                child: Text('근무지 설정'),
+              ),
+              IconButton(
+                icon: Icon(Icons.notifications),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => NotificationScreen(),
+                    ),
+                  );
                 },
               ),
             ],
           ),
-          body: SingleChildScrollView(
-            child: Center(
-              child: Column(
-                children: <Widget>[
-                  EmployeeStatusSection(),
-                  NoticeSection(
-                    pageController: _pageController,
-                    currentNoticePage: _currentNoticePage,
-                    notices: notices,
-                  ),
-                  ScheduleSection(appState: appState),
-                  TableCalendar(
-                    locale: 'ko_KR',
-                    calendarFormat: _calendarFormat,
-                    focusedDay: _focusedDay,
-                    firstDay: DateTime.utc(2020, 1, 1),
-                    lastDay: DateTime.utc(2030, 12, 31),
-                    onFormatChanged: (format) {
-                      setState(() {
-                        _calendarFormat = format;
-                      });
-                    },
-                    onDaySelected: (selectedDay, focusedDay) {
-                      setState(() {
-                        _selectedDay = selectedDay;
-                        _focusedDay = focusedDay;
-                      });
-                    },
-                    selectedDayPredicate: (day) {
-                      return isSameDay(_selectedDay, day);
-                    },
-                    headerStyle: HeaderStyle(
-                      formatButtonVisible: false,
-                      titleCentered: true,
-                    ),
-                    holidayPredicate: (day) {
-                      return day.weekday == DateTime.sunday || _holidays.containsKey(day);
-                    },
-                    calendarStyle: CalendarStyle(
-                      holidayTextStyle: TextStyle(color: Colors.red),
-                      holidayDecoration: BoxDecoration(
-                        color: Colors.red.withOpacity(0.1),
-                        shape: BoxShape.circle,
+          body: Column(
+            children: <Widget>[
+              EmployeeProfilePictures(),
+              NoticeSection(
+                pageController: _pageController,
+                currentNoticePage: _currentNoticePage,
+                notices: notices,
+              ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: Container(
+                    // 높이를 조절하고 싶다면 이 부분을 수정하면 됩니다.
+                    height: MediaQuery.of(context).size.height * 1, // 화면 높이의 60%로 설정
+                    child: TableCalendar(
+                      locale: 'ko_KR',
+                      focusedDay: _focusedDay,
+                      firstDay: DateTime.utc(2020, 1, 1),
+                      lastDay: DateTime.utc(2030, 12, 31),
+                      calendarFormat: CalendarFormat.month, // 월간 보기로 고정
+                      availableCalendarFormats: const {
+                        CalendarFormat.month: ''
+                      }, // 다른 형식 옵션 제거
+                      onDaySelected: (selectedDay, focusedDay) {
+                        setState(() {
+                          _selectedDay = selectedDay;
+                          _focusedDay = focusedDay;
+                        });
+                      },
+                      selectedDayPredicate: (day) {
+                        return isSameDay(_selectedDay, day);
+                      },
+                      headerStyle: HeaderStyle(
+                        formatButtonVisible: false, // format 버튼 숨기기
+                        titleCentered: true,
+                        titleTextStyle: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                      weekendTextStyle: TextStyle(color: Colors.blue),
-                      weekendDecoration: BoxDecoration(
-                        color: Colors.blue.withOpacity(0.1),
-                        shape: BoxShape.circle,
+                      holidayPredicate: (day) {
+                        return day.weekday == DateTime.sunday ||
+                            _holidays.containsKey(day);
+                      },
+                      calendarBuilders: CalendarBuilders(
+                        defaultBuilder: (context, date, _) {
+                          return Column(
+                            children: [
+                              Text('${date.day}'),
+                              if (dailyAmounts.containsKey(date))
+                                Text(
+                                  '${dailyAmounts[date]}',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: dailyAmounts[date]! > 0
+                                        ? Colors.blue
+                                        : Colors.red,
+                                  ),
+                                ),
+                            ],
+                          );
+                        },
+                        selectedBuilder: (context, date, _) {
+                          return Container(
+                            margin: const EdgeInsets.all(4.0),
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: Colors.blue,
+                              borderRadius: BorderRadius.circular(8.0),
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  '${date.day}',
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                                if (dailyAmounts.containsKey(date))
+                                  Text(
+                                    '${dailyAmounts[date]}',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          );
+                        },
                       ),
-                    ),
-                  ),
-                  Container(
-                    padding: EdgeInsets.all(16.0),
-                    alignment: Alignment.center,
-                    child: Consumer<CheckInOut>(
-                      builder: (context, checkInOut, child) {
-                        return Text(
-                          _selectedDay != null
-                              ? isWorkday(_selectedDay!)
-                              ? '${DateFormat('HH:mm').format(checkInOut.workStartTime)} ~ ${DateFormat('HH:mm').format(checkInOut.workEndTime)} 근무입니다!'
-                              : '해당 날짜에 근무가 없습니다.'
-                              : '날짜를 선택해 주세요.',
-                          style: TextStyle(fontSize: 18.0),
-                        );
+                      calendarStyle: CalendarStyle(
+                        holidayTextStyle: TextStyle(color: Colors.red),
+                        holidayDecoration: BoxDecoration(
+                          color: Colors.red.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        weekendTextStyle: TextStyle(color: Colors.blue),
+                        weekendDecoration: BoxDecoration(
+                          color: Colors.blue.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      onPageChanged: (focusedDay) {
+                        setState(() {
+                          _focusedDay = focusedDay;
+                        });
                       },
                     ),
                   ),
-                ],
+                ),
               ),
-            ),
-          ),
-          bottomNavigationBar: Consumer<CheckInOut>(
-            builder: (context, checkInOut, child) {
-              return CheckInOutWidget();
-            },
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10.0),
+                child: CheckInOutWidget(),
+              ),
+            ],
           ),
         ),
       ),
@@ -217,21 +297,47 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
   }
 }
 
-class EmployeeStatusSection extends StatelessWidget {
+class EmployeeProfilePictures extends StatelessWidget {
+  final List<Map<String, String>> employees = [
+    {'name': 'Employee 1', 'image': 'assets/profile_image_1.png'},
+    {'name': 'Employee 2', 'image': 'assets/profile_image_2.png'},
+    {'name': 'Employee 3', 'image': 'assets/profile_image_3.png'},
+    {'name': 'Employee 4', 'image': 'assets/profile_image_4.png'},
+  ];
+
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: Text(
-          '현재 근무자 상태',
-          style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
-        ),
+      padding: const EdgeInsets.all(8.0), // padding을 줄여서 여백 최소화
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: List.generate(employees.length, (index) {
+          return GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => EmployeeDetailScreen(
+                    employeeName: employees[index]['name']!,
+                    employeeImage: employees[index]['image']!,
+                  ),
+                ),
+              );
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4.0),
+              child: CircleAvatar(
+                backgroundImage: AssetImage(employees[index]['image']!),
+                radius: 20.0,
+              ),
+            ),
+          );
+        }),
       ),
     );
   }
 }
+
 
 class NoticeSection extends StatelessWidget {
   final PageController pageController;
@@ -247,7 +353,7 @@ class NoticeSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(8.0), // padding을 줄여서 여백 최소화
       child: Container(
         height: 50.0,
         color: Colors.blueAccent,
@@ -290,7 +396,9 @@ class NoticeSection extends StatelessWidget {
                       margin: EdgeInsets.symmetric(horizontal: 2.0),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: currentNoticePage == index ? Colors.white : Colors.grey,
+                        color: currentNoticePage == index
+                            ? Colors.white
+                            : Colors.grey,
                       ),
                     ),
                   ),
@@ -299,23 +407,6 @@ class NoticeSection extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class ScheduleSection extends StatelessWidget {
-  final AppState appState;
-
-  ScheduleSection({required this.appState});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Text(
-        '${appState.selectedWorkplace} 스케쥴',
-        style: TextStyle(fontSize: 24.0, fontWeight: FontWeight.bold),
       ),
     );
   }

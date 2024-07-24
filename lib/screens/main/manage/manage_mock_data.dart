@@ -16,8 +16,8 @@ final List<Map<String, dynamic>> afternoonShiftData = _generateRandomWorkData(
     {'name': '최수영', 'workplace': '근무지 B', 'role': 'employee'},
     {'name': '이수민', 'workplace': '근무지 C', 'role': 'manager'},
   ],
-  startDate: '2024-06-21',
-  endDate: '2024-07-01',
+  startDate: '2024-07-21',
+  endDate: '2024-09-01',
 );
 
 List<Map<String, dynamic>> _generateRandomWorkData(

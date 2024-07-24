@@ -5,6 +5,7 @@ import 'employee_detail_screen.dart';
 import 'manage_mock_data.dart'; // import mock data
 import '../workplace/workplace.dart';
 import '../workplace/workplace_management_screen.dart';
+import '../notification/notification_screen.dart';
 
 class ManageDashboardScreen extends StatelessWidget {
   final List<Workplace> workplaces = [
@@ -36,15 +37,23 @@ class ManageDashboardScreen extends StatelessWidget {
       margin: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       padding: EdgeInsets.all(16.0),
       decoration: BoxDecoration(
-        color: Colors.grey[200],
-        borderRadius: BorderRadius.circular(8.0),
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.3),
+            spreadRadius: 3,
+            blurRadius: 7,
+            offset: Offset(0, 3),
+          ),
+        ],
+        borderRadius: BorderRadius.circular(12.0),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             shiftTitle,
-            style: TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
           ),
           SizedBox(height: 8.0),
           Row(
@@ -57,7 +66,9 @@ class ManageDashboardScreen extends StatelessWidget {
                       children: [
                         CircleAvatar(
                           backgroundImage: AssetImage(employee['profileImage']),
+                          radius: 24.0,
                         ),
+                        SizedBox(height: 4.0),
                         Text(employee['name']),
                       ],
                     ),
@@ -89,35 +100,40 @@ class ManageDashboardScreen extends StatelessWidget {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('메인'),
+          title: Text(
+            appState.selectedWorkplace,
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+          ),
           automaticallyImplyLeading: false,
           actions: [
-            PopupMenuButton<Workplace>(
-              onSelected: (Workplace selectedWorkplace) {
-                if (selectedWorkplace.name == '근무지 설정') {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => WorkplaceManagementScreen(workplaces: workplaces),
-                    ),
-                  );
-                } else {
-                  appState.setSelectedWorkplace(selectedWorkplace.name);
-                }
-              },
-              itemBuilder: (BuildContext context) {
-                return [
-                  ...workplaces.map((Workplace workplace) {
-                    return PopupMenuItem<Workplace>(
-                      value: workplace,
-                      child: Text(workplace.name),
-                    );
-                  }).toList(),
-                  PopupMenuItem<Workplace>(
-                    value: Workplace(name: '근무지 설정', phoneNumber: '', address: '', profileImagePath: ''),
-                    child: Text('근무지 설정'),
+            TextButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        WorkplaceManagementScreen(workplaces: workplaces),
                   ),
-                ];
+                );
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white,
+                backgroundColor: Colors.blueAccent,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+              ),
+              child: Text('근무지 설정'),
+            ),
+            IconButton(
+              icon: Icon(Icons.notifications),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => NotificationScreen(),
+                  ),
+                );
               },
             ),
           ],

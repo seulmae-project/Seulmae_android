@@ -19,8 +19,10 @@ class AppState extends ChangeNotifier {
 
   void setSelectedWorkplace(String workplace) {
     selectedWorkplace = workplace;
-    updateUserRole(); // 접근 제한자 제거
-    notifyListeners();
+    Future.microtask(() {
+      updateUserRole();
+      notifyListeners();
+    });
   }
 
   void setCurrentBackPressTime(DateTime time) {
@@ -29,9 +31,11 @@ class AppState extends ChangeNotifier {
   }
 
   void setCurrentUser(User user) {
-    currentUser = user;
-    updateUserRole(); // 접근 제한자 제거
-    notifyListeners();
+    Future.microtask(() {
+      currentUser = user;
+      updateUserRole();
+      notifyListeners();
+    });
   }
 
   void setCurrentPage(int page) {
@@ -53,7 +57,7 @@ class AppState extends ChangeNotifier {
     return "${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}";
   }
 
-  void updateUserRole() { // 접근 제한자 제거
+  void updateUserRole() {
     if (currentUser != null && currentUser!.roles.containsKey(selectedWorkplace)) {
       userRole = currentUser!.roles[selectedWorkplace]!;
     } else {

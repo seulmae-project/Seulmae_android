@@ -87,7 +87,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => IdSearchScreen()),
+                          MaterialPageRoute(
+                              builder: (context) => IdSearchScreen()),
                         );
                       },
                       child: Text(
@@ -112,7 +113,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => PasswordResetScreen()),
+                          MaterialPageRoute(
+                              builder: (context) => PasswordResetScreen()),
                         );
                       },
                       child: Text(
@@ -128,7 +130,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => SignUpScreen()),
+                          MaterialPageRoute(
+                              builder: (context) => SignUpScreen()),
                         );
                       },
                       child: Text(
@@ -155,7 +158,7 @@ class _LoginScreenState extends State<LoginScreen> {
     });
     String id = _idController.text.trim();
     String password = _passwordController.text.trim();
-    await authProvider.login(id, password);
+    await authProvider.login(id, password, context);
     setState(() {
       _isLoading = false;
     });

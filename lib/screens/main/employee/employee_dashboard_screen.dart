@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:provider/provider.dart';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart';  // intl 패키지 import 추가
 import '../employee_detail_screen.dart';
 import '../notification/notification_screen.dart';
 import '../workplace/workplace.dart';
@@ -12,14 +12,12 @@ import '../workplace/workplace_management_screen.dart';
 import 'check_in_out.dart';
 import 'check_in_out_widget.dart';
 
-// 공지사항 목록 정의
 final List<String> notices = [
   '공지사항 1',
   '공지사항 2',
   '공지사항 3',
 ];
 
-// 휴일 목록 정의
 final Map<DateTime, List<String>> _holidays = {
   DateTime.utc(2024, 1, 1): ['New Year\'s Day'],
   DateTime.utc(2024, 3, 1): ['삼일절'],
@@ -30,21 +28,16 @@ final Map<DateTime, List<String>> _holidays = {
   DateTime.utc(2024, 12, 25): ['Christmas Day'],
 };
 
-// 일별 금액 정의
 final Map<DateTime, int> dailyAmounts = {
   DateTime.utc(2024, 7, 1): 20000,
   DateTime.utc(2024, 7, 2): 20000,
   DateTime.utc(2024, 7, 3): 20000,
   DateTime.utc(2024, 7, 4): 20000,
-  DateTime.utc(2024, 7, 5): 0,
-  DateTime.utc(2024, 7, 6): 0,
-  DateTime.utc(2024, 7, 7): 0,
   DateTime.utc(2024, 7, 8): 10000,
   DateTime.utc(2024, 7, 9): 20000,
   DateTime.utc(2024, 7, 10): 50000,
   DateTime.utc(2024, 7, 11): 11000,
   DateTime.utc(2024, 7, 12): 11000,
-  DateTime.utc(2024, 7, 14): 0,
   DateTime.utc(2024, 7, 15): 50000,
   DateTime.utc(2024, 7, 16): 20000,
   DateTime.utc(2024, 7, 17): 20000,
@@ -113,63 +106,9 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
     return ChangeNotifierProvider(
       create: (_) => CheckInOut(),
       child: WillPopScope(
-        onWillPop: () async {
-          DateTime now = DateTime.now();
-
-          if (_currentBackPressTime == null ||
-              now.difference(_currentBackPressTime!) > Duration(seconds: 2)) {
-            _currentBackPressTime = now;
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('한 번 더 누르시면 앱이 종료됩니다.'),
-                duration: Duration(seconds: 2),
-              ),
-            );
-            return false;
-          }
-
-          return true;
-        },
+        onWillPop: _onWillPop,
         child: Scaffold(
-          appBar: AppBar(
-            title: Text(
-              appState.selectedWorkplace,
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-            ),
-            automaticallyImplyLeading: false,
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          WorkplaceManagementScreen(workplaces: workplaces),
-                    ),
-                  );
-                },
-                style: TextButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  backgroundColor: Colors.blueAccent,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
-                ),
-                child: Text('근무지 설정'),
-              ),
-              IconButton(
-                icon: Icon(Icons.notifications),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => NotificationScreen(),
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
+          appBar: _buildAppBar(context, appState),
           body: Column(
             children: <Widget>[
               EmployeeProfilePictures(),
@@ -177,107 +116,18 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
                 pageController: _pageController,
                 currentNoticePage: _currentNoticePage,
                 notices: notices,
+                onPageChanged: (index) {
+                  setState(() {
+                    _currentNoticePage = index;
+                  });
+                },
               ),
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8.0),
                   child: Container(
-                    // 높이를 조절하고 싶다면 이 부분을 수정하면 됩니다.
-                    height: MediaQuery.of(context).size.height * 1, // 화면 높이의 60%로 설정
-                    child: TableCalendar(
-                      locale: 'ko_KR',
-                      focusedDay: _focusedDay,
-                      firstDay: DateTime.utc(2020, 1, 1),
-                      lastDay: DateTime.utc(2030, 12, 31),
-                      calendarFormat: CalendarFormat.month, // 월간 보기로 고정
-                      availableCalendarFormats: const {
-                        CalendarFormat.month: ''
-                      }, // 다른 형식 옵션 제거
-                      onDaySelected: (selectedDay, focusedDay) {
-                        setState(() {
-                          _selectedDay = selectedDay;
-                          _focusedDay = focusedDay;
-                        });
-                      },
-                      selectedDayPredicate: (day) {
-                        return isSameDay(_selectedDay, day);
-                      },
-                      headerStyle: HeaderStyle(
-                        formatButtonVisible: false, // format 버튼 숨기기
-                        titleCentered: true,
-                        titleTextStyle: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      holidayPredicate: (day) {
-                        return day.weekday == DateTime.sunday ||
-                            _holidays.containsKey(day);
-                      },
-                      calendarBuilders: CalendarBuilders(
-                        defaultBuilder: (context, date, _) {
-                          return Column(
-                            children: [
-                              Text('${date.day}'),
-                              if (dailyAmounts.containsKey(date))
-                                Text(
-                                  '${dailyAmounts[date]}',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: dailyAmounts[date]! > 0
-                                        ? Colors.blue
-                                        : Colors.red,
-                                  ),
-                                ),
-                            ],
-                          );
-                        },
-                        selectedBuilder: (context, date, _) {
-                          return Container(
-                            margin: const EdgeInsets.all(4.0),
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              color: Colors.blue,
-                              borderRadius: BorderRadius.circular(8.0),
-                            ),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  '${date.day}',
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                                if (dailyAmounts.containsKey(date))
-                                  Text(
-                                    '${dailyAmounts[date]}',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-                      calendarStyle: CalendarStyle(
-                        holidayTextStyle: TextStyle(color: Colors.red),
-                        holidayDecoration: BoxDecoration(
-                          color: Colors.red.withOpacity(0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        weekendTextStyle: TextStyle(color: Colors.blue),
-                        weekendDecoration: BoxDecoration(
-                          color: Colors.blue.withOpacity(0.1),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      onPageChanged: (focusedDay) {
-                        setState(() {
-                          _focusedDay = focusedDay;
-                        });
-                      },
-                    ),
+                    height: MediaQuery.of(context).size.height * 0.4,
+                    child: _buildCalendar(),
                   ),
                 ),
               ),
@@ -292,8 +142,174 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
     );
   }
 
-  bool isWorkday(DateTime dateTime) {
-    return dateTime.weekday >= 1 && dateTime.weekday <= 5;
+  AppBar _buildAppBar(BuildContext context, AppState appState) {
+    return AppBar(
+      title: Text(
+        appState.selectedWorkplace,
+        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+      ),
+      automaticallyImplyLeading: false,
+      actions: [
+        TextButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) =>
+                    WorkplaceManagementScreen(workplaces: workplaces),
+              ),
+            );
+          },
+          style: TextButton.styleFrom(
+            foregroundColor: Colors.white,
+            backgroundColor: Colors.blueAccent,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8.0),
+            ),
+          ),
+          child: Text('근무지 설정'),
+        ),
+        IconButton(
+          icon: Icon(Icons.notifications),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => NotificationScreen(),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Future<bool> _onWillPop() async {
+    DateTime now = DateTime.now();
+
+    if (_currentBackPressTime == null ||
+        now.difference(_currentBackPressTime!) > Duration(seconds: 2)) {
+      _currentBackPressTime = now;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('한 번 더 누르시면 앱이 종료됩니다.'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return false;
+    }
+
+    return true;
+  }
+
+  TableCalendar _buildCalendar() {
+    return TableCalendar(
+      locale: 'ko_KR',
+      focusedDay: _focusedDay,
+      firstDay: DateTime.utc(2020, 1, 1),
+      lastDay: DateTime.utc(2030, 12, 31),
+      calendarFormat: CalendarFormat.month,
+      availableCalendarFormats: const {
+        CalendarFormat.month: ''
+      },
+      onDaySelected: (selectedDay, focusedDay) {
+        setState(() {
+          _selectedDay = selectedDay;
+          _focusedDay = focusedDay;
+        });
+      },
+      selectedDayPredicate: (day) {
+        return isSameDay(_selectedDay, day);
+      },
+      headerStyle: HeaderStyle(
+        formatButtonVisible: false,
+        titleCentered: true,
+        titleTextStyle: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      holidayPredicate: (day) {
+        return day.weekday == DateTime.sunday ||
+            _holidays.containsKey(day);
+      },
+      calendarBuilders: CalendarBuilders(
+        dowBuilder: (context, day) {
+          final text = DateFormat.E('ko_KR').format(day);
+
+          return Center(
+            child: Text(
+              text,
+              style: TextStyle(
+                color: day.weekday == DateTime.saturday ||
+                    day.weekday == DateTime.sunday
+                    ? Colors.red
+                    : Colors.black,
+              ),
+            ),
+          );
+        },
+        defaultBuilder: (context, date, _) {
+          return _buildCalendarCell(date, Colors.white, Colors.black);
+        },
+        selectedBuilder: (context, date, _) {
+          return _buildCalendarCell(date, Colors.blue, Colors.white);
+        },
+        holidayBuilder: (context, date, _) {
+          return _buildCalendarCell(date, Colors.redAccent, Colors.white);
+        },
+      ),
+      calendarStyle: CalendarStyle(
+        holidayTextStyle: TextStyle(color: Colors.white),
+        holidayDecoration: BoxDecoration(
+          color: Colors.redAccent,
+          shape: BoxShape.rectangle,
+          borderRadius: BorderRadius.circular(6.0),
+        ),
+        weekendTextStyle: TextStyle(color: Colors.white),
+        weekendDecoration: BoxDecoration(
+          color: Colors.grey,
+          shape: BoxShape.rectangle,
+          borderRadius: BorderRadius.circular(6.0),
+        ),
+      ),
+      onPageChanged: (focusedDay) {
+        setState(() {
+          _focusedDay = focusedDay;
+        });
+      },
+    );
+  }
+
+  Widget _buildCalendarCell(DateTime date, Color bgColor, Color textColor) {
+    return Container(
+      margin: const EdgeInsets.all(4.0),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(6.0),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            '${date.day}',
+            style: TextStyle(
+              fontSize: 16.0,
+              color: textColor,
+            ),
+          ),
+          if (dailyAmounts.containsKey(date) && dailyAmounts[date]! > 0)
+            Text(
+              '${dailyAmounts[date]}',
+              style: TextStyle(
+                fontSize: 12,
+                color: textColor == Colors.black ? Colors.blue : textColor,
+              ),
+            ),
+        ],
+      ),
+    );
   }
 }
 
@@ -308,7 +324,7 @@ class EmployeeProfilePictures extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(8.0), // padding을 줄여서 여백 최소화
+      padding: const EdgeInsets.all(8.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.start,
         children: List.generate(employees.length, (index) {
@@ -338,57 +354,48 @@ class EmployeeProfilePictures extends StatelessWidget {
   }
 }
 
-
 class NoticeSection extends StatelessWidget {
   final PageController pageController;
   final int currentNoticePage;
   final List<String> notices;
+  final Function(int) onPageChanged;
 
   NoticeSection({
     required this.pageController,
     required this.currentNoticePage,
     required this.notices,
+    required this.onPageChanged,
   });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(8.0), // padding을 줄여서 여백 최소화
+      padding: const EdgeInsets.all(8.0),
       child: Container(
-        height: 50.0,
-        color: Colors.blueAccent,
-        child: Stack(
-          children: [
-            PageView.builder(
-              controller: pageController,
-              itemCount: notices.length,
-              onPageChanged: (index) {
-                // Set the current notice page in the state
-              },
-              itemBuilder: (context, index) {
-                return Center(
-                  child: Text(
-                    notices[index],
-                    style: TextStyle(color: Colors.white, fontSize: 16.0),
-                  ),
-                );
-              },
+        decoration: BoxDecoration(
+          color: Color(0xFFF5F5F5),
+          borderRadius: BorderRadius.circular(10.0),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 4.0,
+              spreadRadius: 2.0,
+              offset: Offset(0, 2),
             ),
-            Positioned(
-              bottom: 8.0,
-              left: 0.0,
-              right: 0.0,
+          ],
+        ),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(
                   notices.length,
                       (index) => GestureDetector(
                     onTap: () {
-                      pageController.animateToPage(
-                        index,
-                        duration: Duration(milliseconds: 300),
-                        curve: Curves.easeIn,
-                      );
+                      pageController.jumpToPage(index);
+                      onPageChanged(index);
                     },
                     child: Container(
                       width: 8.0,
@@ -397,12 +404,28 @@ class NoticeSection extends StatelessWidget {
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: currentNoticePage == index
-                            ? Colors.white
-                            : Colors.grey,
+                            ? Colors.grey
+                            : Colors.black12,
                       ),
                     ),
                   ),
                 ),
+              ),
+            ),
+            Container(
+              height: 50.0,
+              child: PageView.builder(
+                controller: pageController,
+                itemCount: notices.length,
+                onPageChanged: onPageChanged,
+                itemBuilder: (context, index) {
+                  return Center(
+                    child: Text(
+                      notices[index],
+                      style: TextStyle(color: Colors.black, fontSize: 16.0),
+                    ),
+                  );
+                },
               ),
             ),
           ],

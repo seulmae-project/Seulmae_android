@@ -5,6 +5,7 @@ import 'package:sm3/screens/main/phone_number_change_screen.dart';
 import 'package:sm3/screens/main/profile_edit_screen.dart';
 import 'package:sm3/screens/signin/login_screen.dart';
 import '../../providers/auth_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsScreen extends StatelessWidget {
   Future<void> _showLogoutDialog(BuildContext context) async {
@@ -25,6 +26,8 @@ class SettingsScreen extends StatelessWidget {
               child: Text('로그아웃'),
               onPressed: () async {
                 await Provider.of<AuthProvider>(context, listen: false).logout();
+                SharedPreferences prefs = await SharedPreferences.getInstance();
+                await prefs.clear(); // Clear shared preferences
                 Navigator.pushAndRemoveUntil(
                   context,
                   MaterialPageRoute(builder: (BuildContext context) => LoginScreen()),
@@ -56,6 +59,8 @@ class SettingsScreen extends StatelessWidget {
               child: Text('탈퇴하기'),
               onPressed: () async {
                 await Provider.of<AuthProvider>(context, listen: false).deleteAccount();
+                SharedPreferences prefs = await SharedPreferences.getInstance();
+                await prefs.clear(); // Clear shared preferences
                 Navigator.pushAndRemoveUntil(
                   context,
                   MaterialPageRoute(builder: (BuildContext context) => LoginScreen()),

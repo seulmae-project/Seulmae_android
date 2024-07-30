@@ -75,15 +75,7 @@ class _WorkStatusScreenState extends State<WorkStatusScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('근무 현황'),
-        automaticallyImplyLeading: false,
-        actions: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              children: [],
-            ),
-          ),
-        ],
+        automaticallyImplyLeading: true, // Allow back navigation
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -109,31 +101,24 @@ class _WorkStatusScreenState extends State<WorkStatusScreen> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             child: Container(
               decoration: BoxDecoration(
                 color: Colors.grey[200], // 회색 배경
-                border: Border.all(color: Colors.grey),
-                borderRadius: BorderRadius.circular(16.0),
+                borderRadius: BorderRadius.circular(10.0),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
                       '총합계',
                       style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
                     ),
-                    SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Spacer(), // 왼쪽에 공간을 차지하여 오른쪽으로 밀어줌
-                        Text(
-                          '${_totalEarnings.toStringAsFixed(0)} 원',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-                        ),
-                      ],
+                    Text(
+                      '${_totalEarnings.toStringAsFixed(0)} 원',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
                     ),
                   ],
                 ),
@@ -160,14 +145,13 @@ class _WorkStatusScreenState extends State<WorkStatusScreen> {
                     '${_selectedMonth.year}-${_selectedMonth.month.toString().padLeft(2, '0')}-${(index + 1).toString().padLeft(2, '0')}';
 
                 return Padding(
-                  padding: const EdgeInsets.all(8.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                   child: Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(16.0),
                     decoration: BoxDecoration(
                       color: Colors.grey[200], // 회색 배경
-                      border: Border.all(color: Colors.grey),
-                      borderRadius: BorderRadius.circular(16.0),
+                      borderRadius: BorderRadius.circular(10.0),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,

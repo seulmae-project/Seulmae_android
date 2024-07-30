@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
+import '../main/app_state.dart';
 import '../main/main_screen.dart';
 import '../signup/id_search_screen.dart';
 import '../signup/password_reset_screen.dart';
@@ -87,8 +88,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(
-                              builder: (context) => IdSearchScreen()),
+                          MaterialPageRoute(builder: (context) => IdSearchScreen()),
                         );
                       },
                       child: Text(
@@ -113,8 +113,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(
-                              builder: (context) => PasswordResetScreen()),
+                          MaterialPageRoute(builder: (context) => PasswordResetScreen()),
                         );
                       },
                       child: Text(
@@ -130,8 +129,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(
-                              builder: (context) => SignUpScreen()),
+                          MaterialPageRoute(builder: (context) => SignUpScreen()),
                         );
                       },
                       child: Text(
@@ -163,6 +161,7 @@ class _LoginScreenState extends State<LoginScreen> {
       _isLoading = false;
     });
     if (authProvider.isLoggedIn) {
+      Provider.of<AppState>(context, listen: false).setSelectedIndex(0); // Set initial index to 0 (dashboard)
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => MainScreen()),

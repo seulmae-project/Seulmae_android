@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sm3/screens/main/password_confirmation_screen.dart';
-import 'package:sm3/screens/main/phone_number_change_screen.dart';
-import 'package:sm3/screens/main/profile_edit_screen.dart';
+import 'package:sm3/screens/main/setting/phone_number_change_screen.dart';
+import 'package:sm3/screens/main/setting/profile_edit_screen.dart';
 import 'package:sm3/screens/signin/login_screen.dart';
-import '../../providers/auth_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../../providers/auth_provider.dart';
 
 class SettingsScreen extends StatelessWidget {
   Future<void> _showLogoutDialog(BuildContext context) async {

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../screens/main/app_state.dart';
 import '../screens/main/user_roles.dart';
 
@@ -26,6 +26,7 @@ class AuthProvider with ChangeNotifier {
 
       final appState = Provider.of<AppState>(context, listen: false);
       appState.setCurrentUser(_currentUser!);
+      appState.setSelectedWorkplace(appState.selectedWorkplace); // update role
 
       notifyListeners();
     }

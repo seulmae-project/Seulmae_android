@@ -19,10 +19,8 @@ class AppState extends ChangeNotifier {
 
   void setSelectedWorkplace(String workplace) {
     selectedWorkplace = workplace;
-    Future.microtask(() {
-      updateUserRole();
-      notifyListeners();
-    });
+    _updateUserRole();
+    notifyListeners();
   }
 
   void setCurrentBackPressTime(DateTime time) {
@@ -31,11 +29,9 @@ class AppState extends ChangeNotifier {
   }
 
   void setCurrentUser(User user) {
-    Future.microtask(() {
-      currentUser = user;
-      updateUserRole();
-      notifyListeners();
-    });
+    currentUser = user;
+    _updateUserRole();
+    notifyListeners();
   }
 
   void setCurrentPage(int page) {
@@ -57,11 +53,12 @@ class AppState extends ChangeNotifier {
     return "${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}";
   }
 
-  void updateUserRole() {
+  void _updateUserRole() {
     if (currentUser != null && currentUser!.roles.containsKey(selectedWorkplace)) {
       userRole = currentUser!.roles[selectedWorkplace]!;
     } else {
       userRole = 'employee'; // 기본 역할
     }
+    notifyListeners();
   }
 }

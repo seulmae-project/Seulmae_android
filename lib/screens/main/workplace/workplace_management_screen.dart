@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../providers/auth_provider.dart';
 import '../app_state.dart';
 import 'workplace.dart';
 import 'regist_work_place.dart';
@@ -7,12 +8,10 @@ import 'regist_work_place.dart';
 class WorkplaceManagementScreen extends StatefulWidget {
   final List<Workplace> workplaces;
 
-  const WorkplaceManagementScreen({Key? key, required this.workplaces})
-      : super(key: key);
+  const WorkplaceManagementScreen({Key? key, required this.workplaces}) : super(key: key);
 
   @override
-  _WorkplaceManagementScreenState createState() =>
-      _WorkplaceManagementScreenState();
+  _WorkplaceManagementScreenState createState() => _WorkplaceManagementScreenState();
 }
 
 class _WorkplaceManagementScreenState extends State<WorkplaceManagementScreen> {
@@ -23,13 +22,13 @@ class _WorkplaceManagementScreenState extends State<WorkplaceManagementScreen> {
   void initState() {
     super.initState();
     final appState = Provider.of<AppState>(context, listen: false);
-    selectedWorkplaceIndex = widget.workplaces.indexWhere(
-            (workplace) => workplace.name == appState.selectedWorkplace);
+    selectedWorkplaceIndex = widget.workplaces.indexWhere((workplace) => workplace.name == appState.selectedWorkplace);
   }
 
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
     return Scaffold(
       appBar: AppBar(
@@ -98,6 +97,7 @@ class _WorkplaceManagementScreenState extends State<WorkplaceManagementScreen> {
                 setState(() {
                   selectedWorkplaceIndex = value;
                   appState.setSelectedWorkplace(workplace.name);
+                  authProvider.updateUserRole(workplace.name);
                 });
               },
             ),
@@ -106,6 +106,7 @@ class _WorkplaceManagementScreenState extends State<WorkplaceManagementScreen> {
                 setState(() {
                   selectedWorkplaceIndex = index;
                   appState.setSelectedWorkplace(workplace.name);
+                  authProvider.updateUserRole(workplace.name);
                 });
               }
             },

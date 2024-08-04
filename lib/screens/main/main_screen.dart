@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sm3/screens/main/setting/settings_screen.dart';
 import '../../providers/auth_provider.dart';
 import 'app_state.dart';
 import 'employee/employee_dashboard_screen.dart';
 import 'employee/work_status_screen.dart';
 import 'manage/manage_dashboard_screen.dart';
 import 'manage/work_status_manage_screen.dart';
-import 'settings_screen.dart';
 
 class MainScreen extends StatelessWidget {
   final List<Widget> _employeeOptions = <Widget>[

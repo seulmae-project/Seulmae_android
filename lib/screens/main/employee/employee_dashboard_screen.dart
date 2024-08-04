@@ -29,32 +29,8 @@ final Map<DateTime, List<String>> _holidays = {
 };
 
 final Map<DateTime, int> dailyAmounts = {
-  DateTime.utc(2024, 7, 1): 20000,
-  DateTime.utc(2024, 7, 2): 20000,
-  DateTime.utc(2024, 7, 3): 20000,
-  DateTime.utc(2024, 7, 4): 20000,
-  DateTime.utc(2024, 7, 8): 10000,
-  DateTime.utc(2024, 7, 9): 20000,
-  DateTime.utc(2024, 7, 10): 50000,
-  DateTime.utc(2024, 7, 11): 11000,
-  DateTime.utc(2024, 7, 12): 11000,
-  DateTime.utc(2024, 7, 15): 50000,
-  DateTime.utc(2024, 7, 16): 20000,
-  DateTime.utc(2024, 7, 17): 20000,
-  DateTime.utc(2024, 7, 18): 20000,
-  DateTime.utc(2024, 7, 19): 20000,
-  DateTime.utc(2024, 7, 20): 20000,
-  DateTime.utc(2024, 7, 21): 20000,
-  DateTime.utc(2024, 7, 22): 20000,
-  DateTime.utc(2024, 7, 23): 20000,
-  DateTime.utc(2024, 7, 24): 50000,
-  DateTime.utc(2024, 7, 25): 50000,
-  DateTime.utc(2024, 7, 26): 20000,
-  DateTime.utc(2024, 7, 27): 20000,
-  DateTime.utc(2024, 7, 28): 20000,
-  DateTime.utc(2024, 7, 29): 20000,
-  DateTime.utc(2024, 7, 30): 20000,
-  DateTime.utc(2024, 7, 31): 1000,
+  DateTime.utc(2024, 8, 1): 20000,
+  DateTime.utc(2024, 8, 26): 20000
 };
 
 class EmployeeDashboardScreen extends StatefulWidget {

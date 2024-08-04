@@ -19,6 +19,8 @@ dependencies:
     sdk: flutter
   cupertino_icons: ^1.0.6
   image_picker: ^0.8.9
+  image_cropper: ^1.4.0
+  permission_handler: ^10.0.0
   flutter_datetime_picker_plus: ^2.2.0 # Updated dependency
 
 dev_dependencies:

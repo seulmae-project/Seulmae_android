@@ -1,85 +1,71 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../app_state.dart';
-import 'employee_detail_screen.dart';
-import 'manage_mock_data.dart'; // import mock data
-import '../workplace/workplace.dart';
+import '../employee/employee_dashboard_screen.dart';
+import '../workplace/workplace_entry_screen.dart';
 import '../workplace/workplace_management_screen.dart';
 import '../notification/notification_screen.dart';
 
-class ManageDashboardScreen extends StatelessWidget {
-  final List<Workplace> workplaces = [
-    Workplace(name: '근무지 A', phoneNumber: '031-1111-2222', address: '인천광역시 남구', profileImagePath: ''),
-    Workplace(name: '근무지 B', phoneNumber: '032-2222-3333', address: '서울특별시 강남구', profileImagePath: ''),
-    Workplace(name: '근무지 C', phoneNumber: '033-3333-4444', address: '부산광역시 해운대구', profileImagePath: ''),
-  ];
+class ManageDashboardScreen extends StatefulWidget {
+  const ManageDashboardScreen({Key? key}) : super(key: key);
 
-  void _showEmployeeDetail(BuildContext context, Map<String, dynamic> employeeData) async {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => EmployeeDetailScreen(employeeData: employeeData),
-      ),
-    );
+  @override
+  ManageDashboardScreenState createState() => ManageDashboardScreenState();
+}
+
+class ManageDashboardScreenState extends State<ManageDashboardScreen> {
+  PageController _pageController = PageController();
+  int _currentNoticePage = 0;
+  Timer? _noticeTimer;
+  DateTime selectedDate = DateTime.now();
+
+  @override
+  void initState() {
+    super.initState();
+    _startNoticeTimer();
   }
 
-  Widget _buildShiftCard(BuildContext context, String shiftTitle, List<Map<String, dynamic>> shiftData, DateTime selectedDate) {
-    final filteredShiftData = shiftData.where((employee) {
-      return employee['workHistory'].any((work) {
-        DateTime workDate = DateTime.parse(work['date']);
-        return workDate.year == selectedDate.year &&
-            workDate.month == selectedDate.month &&
-            workDate.day == selectedDate.day;
-      });
-    }).toList();
+  @override
+  void dispose() {
+    _noticeTimer?.cancel();
+    _pageController.dispose();
+    super.dispose();
+  }
 
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      padding: EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.3),
-            spreadRadius: 3,
-            blurRadius: 7,
-            offset: Offset(0, 3),
-          ),
-        ],
-        borderRadius: BorderRadius.circular(12.0),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            shiftTitle,
-            style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
-          ),
-          SizedBox(height: 8.0),
-          Row(
-            children: filteredShiftData.map((employee) {
-              return Expanded(
-                child: GestureDetector(
-                  onTap: () => _showEmployeeDetail(context, employee),
-                  child: Center(
-                    child: Column(
-                      children: [
-                        CircleAvatar(
-                          backgroundImage: AssetImage(employee['profileImage']),
-                          radius: 24.0,
-                        ),
-                        SizedBox(height: 4.0),
-                        Text(employee['name']),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-        ],
-      ),
+  void _startNoticeTimer() {
+    _noticeTimer = Timer.periodic(Duration(seconds: 7), (Timer timer) {
+      setState(() {
+        _currentNoticePage = (_currentNoticePage + 1) % notices.length;
+      });
+      _pageController.animateToPage(
+        _currentNoticePage,
+        duration: Duration(milliseconds: 300),
+        curve: Curves.easeIn,
+      );
+    });
+  }
+
+  void _onApprove() {
+    if (_pageController.hasClients) {
+      _pageController.nextPage(
+        duration: Duration(milliseconds: 300),
+        curve: Curves.easeIn,
+      );
+    }
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: selectedDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2030),
     );
+    if (picked != null && picked != selectedDate)
+      setState(() {
+        selectedDate = picked;
+      });
   }
 
   @override
@@ -138,98 +124,249 @@ class ManageDashboardScreen extends StatelessWidget {
             ),
           ],
         ),
-        body: ListView(
-          children: <Widget>[
-            Container(
-              height: 50.0,
-              color: Colors.blueAccent,
-              child: Stack(
-                children: [
-                  PageView.builder(
-                    controller: appState.pageController,
-                    itemCount: 3,
-                    onPageChanged: (index) {
-                      appState.setCurrentPage(index);
-                    },
-                    itemBuilder: (context, index) {
-                      return Center(
-                        child: Text(
-                          '공지사항 ${index + 1}',
-                          style: TextStyle(color: Colors.white, fontSize: 16.0),
-                        ),
-                      );
-                    },
-                  ),
-                  Positioned(
-                    bottom: 8.0,
-                    left: 0.0,
-                    right: 0.0,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(
-                        3,
-                            (index) => GestureDetector(
-                          onTap: () {
-                            appState.pageController.animateToPage(
-                              index,
-                              duration: Duration(milliseconds: 300),
-                              curve: Curves.easeIn,
-                            );
-                          },
-                          child: Container(
-                            width: 8.0,
-                            height: 8.0,
-                            margin: EdgeInsets.symmetric(horizontal: 2.0),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: appState.currentPage == index ? Colors.white : Colors.grey,
-                            ),
-                          ),
-                        ),
+        body: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                EmployeeProfilePictures(),
+                NoticeSection(
+                  pageController: _pageController,
+                  currentNoticePage: _currentNoticePage,
+                  notices: notices,
+                  onPageChanged: (index) {
+                    setState(() {
+                      _currentNoticePage = index;
+                    });
+                  },
+                ),
+                SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '금일의 근무를 확인해주세요',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  '현재 근무자 상태',
-                  style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Align(
-                alignment: Alignment.center,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    IconButton(
-                      onPressed: appState.decrementDate,
-                      icon: Icon(Icons.arrow_back),
-                    ),
-                    Text(
-                      appState.getFormattedDate(),
-                      style: TextStyle(fontSize: 18.0),
-                    ),
-                    IconButton(
-                      onPressed: appState.incrementDate,
-                      icon: Icon(Icons.arrow_forward),
+                    TextButton(
+                      onPressed: () => _selectDate(context),
+                      child: Text(
+                        "${selectedDate.toLocal()}".split(' ')[0],
+                        style: TextStyle(fontSize: 16),
+                      ),
                     ),
                   ],
                 ),
-              ),
+                SizedBox(height: 8),
+                Divider(thickness: 1.5),
+                SizedBox(height: 8),
+                Text(
+                  '${selectedDate.month}월 ${selectedDate.day}일 (${_getWeekday(selectedDate.weekday)})',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Center(
+                        child: Column(
+                          children: [
+                            Text(
+                              '미완료',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                            Text(
+                              '3개',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Center(
+                        child: Column(
+                          children: [
+                            Text(
+                              '완료',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                            Text(
+                              '1개',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 16),
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: NeverScrollableScrollPhysics(),
+                  itemCount: workInfoList.length,
+                  itemBuilder: (context, index) {
+                    final workInfo = workInfoList[index];
+                    return _buildWorkInfoCard(
+                      workInfo['name']!,
+                      workInfo['totalHours']!,
+                      workInfo['checkInTime']!,
+                      workInfo['checkOutTime']!,
+                      workInfo['profileImagePath']!,
+                    );
+                  },
+                ),
+              ],
             ),
-            _buildShiftCard(context, '오전 파트(오전 09:00 - 오후 01:00)', morningShiftData, appState.selectedDate),
-            _buildShiftCard(context, '오후 파트(오후 02:00 - 오후 06:00)', afternoonShiftData, appState.selectedDate),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWorkInfoCard(String name, String totalHours, String checkInTime, String checkOutTime, String profileImagePath) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Container(
+        padding: EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.2),
+              spreadRadius: 2,
+              blurRadius: 5,
+              offset: Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                CircleAvatar(
+                  backgroundImage: AssetImage(profileImagePath),
+                  radius: 20,
+                ),
+                SizedBox(width: 8),
+                Text(
+                  name,
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                Spacer(),
+                Text(
+                  '미완료',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.blueAccent,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 8),
+            Text(
+              '총 시간: $totalHours',
+              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+            ),
+            Text(
+              '출근: $checkInTime',
+              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+            ),
+            Text(
+              '퇴근: $checkOutTime',
+              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+            ),
+            SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                ElevatedButton(
+                  onPressed: _onApprove,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blueAccent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                  ),
+                  child: Text('승인'),
+                ),
+                SizedBox(width: 8),
+                ElevatedButton(
+                  onPressed: () {},
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.grey,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                  ),
+                  child: Text('수정'),
+                ),
+              ],
+            ),
           ],
         ),
       ),
     );
   }
+
+  String _getWeekday(int weekday) {
+    switch (weekday) {
+      case 1:
+        return '월요일';
+      case 2:
+        return '화요일';
+      case 3:
+        return '수요일';
+      case 4:
+        return '목요일';
+      case 5:
+        return '금요일';
+      case 6:
+        return '토요일';
+      case 7:
+        return '일요일';
+      default:
+        return '';
+    }
+  }
 }
+
+const workInfoList = [
+  {
+    'name': '조원호',
+    'totalHours': '10시간',
+    'checkInTime': 'AM 10:20',
+    'checkOutTime': 'PM 20:20',
+    'profileImagePath': 'assets/profile_image_1.png',
+  },
+  {
+    'name': '김영호',
+    'totalHours': '10시간',
+    'checkInTime': 'AM 10:20',
+    'checkOutTime': 'PM 20:20',
+    'profileImagePath': 'assets/profile_image_1.png',
+  },
+  // 더 많은 근무 정보를 추가하세요.
+];

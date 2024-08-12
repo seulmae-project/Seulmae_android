@@ -4,9 +4,17 @@ class User {
   final Map<String, String> roles;
 
   User({required this.id, required this.name, required this.roles});
+
+  factory User.fromJson(Map<String, dynamic> json) {
+    return User(
+      id: json['id'],
+      name: json['name'],
+      roles: Map<String, String>.from(json['roles']),
+    );
+  }
 }
 
-// Example users
+// Example users for fallback or testing
 final User testUser = User(
   id: 'test',
   name: 'Test User',

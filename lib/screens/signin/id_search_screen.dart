@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'password_reset_screen.dart';
-import '../signin/login_screen.dart';
+import 'login_screen.dart';
 import 'dart:async'; // For Timer
 
 class IdSearchScreen extends StatefulWidget {

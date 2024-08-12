@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../signin/login_screen.dart';
+import 'login_screen.dart';
 import 'dart:async';
 
 class PasswordResetScreen extends StatefulWidget {

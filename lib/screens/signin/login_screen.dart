@@ -3,8 +3,8 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../main/app_state.dart';
 import '../main/main_screen.dart';
-import '../signup/id_search_screen.dart';
-import '../signup/password_reset_screen.dart';
+import 'id_search_screen.dart';
+import 'password_reset_screen.dart';
 import '../signup/signup_screen.dart';
 
 class LoginScreen extends StatefulWidget {

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sm3/screens/signup/password_reset_screen.dart';
+import 'package:sm3/screens/signin/password_reset_screen.dart';
 
 class PasswordConfirmationScreen extends StatelessWidget {
   final TextEditingController _passwordController = TextEditingController();

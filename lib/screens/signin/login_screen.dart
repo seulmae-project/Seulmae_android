@@ -156,6 +156,8 @@ class _LoginScreenState extends State<LoginScreen> {
     });
     String id = _idController.text.trim();
     String password = _passwordController.text.trim();
+    print(id);
+    print(password);
     await authProvider.login(id, password, context);
     setState(() {
       _isLoading = false;

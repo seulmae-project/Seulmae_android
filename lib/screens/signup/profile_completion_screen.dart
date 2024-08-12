@@ -3,10 +3,11 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'dart:convert';
 import 'dart:io';
-import 'package:sm3/screens/signin/login_screen.dart';
 import 'package:sm3/screens/signup/signup_completion_screen.dart';
+import '../../config.dart';
 import 'sign_up_data.dart'; // SignUpData 클래스 파일을 import하세요.
 import 'package:sm3/services/image_picker_service.dart'; // ImagePickerService 파일을 import하세요.
+import 'package:http_parser/http_parser.dart';  // MediaType 클래스를 사용하기 위한 import
 
 class ProfileCompletionScreen extends StatefulWidget {
   final SignUpData signUpData;
@@ -29,7 +30,9 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
   final ImagePickerService _imagePickerService = ImagePickerService();
 
   bool get _isFormValid =>
-      _nameController.text.isNotEmpty && _selectedGender.isNotEmpty;
+      _nameController.text.isNotEmpty &&
+          _selectedGender.isNotEmpty &&
+          _selectedDate != null;
 
   void _showImageSourceDialog() {
     showDialog(
@@ -72,6 +75,16 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
                     }
                   },
                 ),
+                ListTile(
+                  leading: Icon(Icons.image),
+                  title: Text('기본 이미지로 설정'),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    setState(() {
+                      _selectedImage = null;  // 기본 이미지로 설정
+                    });
+                  },
+                ),
               ],
             ),
           ),
@@ -95,34 +108,56 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
       birthday: "${_selectedDate.year}${_selectedDate.month.toString().padLeft(2, '0')}${_selectedDate.day.toString().padLeft(2, '0')}",
     );
 
-    final url = Uri.parse('http://144.24.81.53:8080/api/users');
+    final url = Uri.parse('${Config.baseUrl}/api/users');
     var request = http.MultipartRequest('POST', url);
 
-    request.fields['userSignUpDto'] = json.encode({
-      'accountId': updatedSignUpData.accountId,
-      'password': updatedSignUpData.password,
-      'phoneNumber': updatedSignUpData.phoneNumber,
-      'name': updatedSignUpData.name,
-      'isMale': updatedSignUpData.isMale,
-      'birthday': updatedSignUpData.birthday,
-    });
+    // Add the JSON data as a separate multipart field with content type `application/json`
+    request.files.add(
+      http.MultipartFile.fromString(
+        'userSignUpDto',
+        json.encode({
+          'accountId': updatedSignUpData.accountId,
+          'password': updatedSignUpData.password,
+          'phoneNumber': updatedSignUpData.phoneNumber,
+          'name': updatedSignUpData.name,
+          'isMale': updatedSignUpData.isMale,
+          'birthday': updatedSignUpData.birthday,
+        }),
+        contentType: MediaType('application', 'json'),
+      ),
+    );
 
     if (_selectedImage != null) {
-      request.files.add(await http.MultipartFile.fromPath('file', _selectedImage!.path));
+      String mimeType = _selectedImage!.path.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg';
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'file',
+          _selectedImage!.path,
+          contentType: MediaType.parse(mimeType),
+        ),
+      );
     }
 
-    final response = await request.send();
+    try {
+      final response = await request.send();
 
-    if (response.statusCode == 201) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => SignUpCompletionScreen(name: updatedSignUpData.name)), // 성공 시 이동할 화면
-      );
-    } else {
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${await response.stream.bytesToString()}');
+      if (response.statusCode == 201) {
+        print("mimeType");
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => SignUpCompletionScreen(name: updatedSignUpData.name)),
+        );
+      } else {
+        print('Response status: ${response.statusCode}');
+        print('Response body: ${await response.stream.bytesToString()}');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('회원가입에 실패했습니다. 다시 시도해주세요.')),
+        );
+      }
+    } catch (e) {
+      print('Error: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('회원가입에 실패했습니다. 다시 시도해주세요.')),
+        SnackBar(content: Text('회원가입 중 오류가 발생했습니다. 다시 시도해주세요.')),
       );
     }
   }
@@ -173,30 +208,30 @@ class _ProfileCompletionScreenState extends State<ProfileCompletionScreen> {
                   alignment: Alignment.center,
                   children: [
                     CircleAvatar(
-                      radius: 50,
-                      backgroundColor: Colors.grey.shade200,
+                      radius: 60, // Increased size for better visibility
+                      backgroundColor: Colors.grey.shade300, // Softer color for modern look
                       backgroundImage: _selectedImage != null ? FileImage(_selectedImage!) : null,
-                      child: _selectedImage == null
-                          ? Icon(Icons.person, size: 50, color: Colors.grey)
-                          : null,
+                      child: _selectedImage == null ? Icon(Icons.person_add, size: 60, color: Colors.grey.shade600) : null,
                     ),
                     Positioned(
                       bottom: 0,
-                      right: 0,
+                      right: 4,
                       child: Container(
-                        padding: EdgeInsets.all(3),
+                        height: 34, // Increased size for better touch area
+                        width: 34,
                         decoration: BoxDecoration(
-                          border: Border.all(color: Colors.white, width: 2),
+                          color: Colors.blueAccent, // Bright color for visibility
                           shape: BoxShape.circle,
-                          color: Colors.blue,
+                          border: Border.all(width: 2, color: Colors.white),
                         ),
-                        child: Icon(Icons.camera_alt, size: 18, color: Colors.white),
+                        child: Icon(Icons.edit, color: Colors.white, size: 20),
                       ),
                     ),
                   ],
                 ),
               ),
             ),
+
             const SizedBox(height: 20.0),
             const SizedBox(height: 32.0),
             Row(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../../config.dart';
 import 'profile_completion_screen.dart';
 import 'sign_up_data.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -22,6 +23,9 @@ class _EmailAndPasswordScreenState extends State<EmailAndPasswordScreen> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
   bool _isNextButtonEnabled = false;
+  bool _isIdValidated = false;
+  String _idStatusMessage = "";
+  Color _idStatusColor = Colors.black;
 
   bool _hasLowercase = false;
   bool _hasDigits = false;
@@ -31,40 +35,56 @@ class _EmailAndPasswordScreenState extends State<EmailAndPasswordScreen> {
   @override
   void initState() {
     super.initState();
-    _emailController.addListener(_validateForm);
+    _emailController.addListener(_onEmailChanged);
     _passwordController.addListener(_validateForm);
     _confirmPasswordController.addListener(_validateForm);
+  }
+
+  void _onEmailChanged() {
+    if (_isIdValidated) {
+      setState(() {
+        _isIdValidated = false;
+        _idStatusMessage = "";
+      });
+    }
+    _validateForm();
   }
 
   void _validateForm() {
     setState(() {
       final password = _passwordController.text;
+      final email = _emailController.text;
       _hasLowercase = password.contains(RegExp(r'[a-z]'));
       _hasDigits = password.contains(RegExp(r'[0-9]'));
       _hasSpecialCharacters = password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'));
       _hasMinLength = password.length >= 8;
 
-      _isNextButtonEnabled = _emailController.text.isNotEmpty &&
-          _hasLowercase &&
-          _hasDigits &&
-          _hasSpecialCharacters &&
-          _hasMinLength &&
+      _isNextButtonEnabled = email.isNotEmpty && email.length >= 5 && _isIdValidated &&
+          _hasLowercase && _hasDigits && _hasSpecialCharacters && _hasMinLength &&
           _passwordController.text == _confirmPasswordController.text;
     });
   }
 
-  Future<void> _proceedToProfileCompletion() async {
-    final updatedSignUpData = widget.signUpData.copyWith(
-      accountId: _emailController.text,
-      password: _passwordController.text,
+  Future<void> _checkIdDuplication() async {
+    var response = await http.post(
+      Uri.parse('${Config.baseUrl}/api/users/id/duplication'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'accountId': _emailController.text}),
     );
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ProfileCompletionScreen(signUpData: updatedSignUpData),
-      ),
-    );
+    if (response.statusCode == 200) {
+      var data = jsonDecode(response.body);
+      bool isDuplicated = data['data']['duplicated'];
+      setState(() {
+        _isIdValidated = !isDuplicated;
+        _idStatusMessage = _isIdValidated ? "사용 가능한 아이디입니다." : "이미 사용 중인 아이디입니다.";
+        _idStatusColor = _isIdValidated ? Colors.green : Colors.red;
+      });
+    } else {
+      setState(() {
+        _idStatusMessage = "아이디 중복 확인에 실패했습니다.";
+        _idStatusColor = Colors.red;
+      });
+    }
   }
 
   @override
@@ -87,32 +107,59 @@ class _EmailAndPasswordScreenState extends State<EmailAndPasswordScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '아이디로 사용하실\n이메일을 입력해 주세요.',
+              '계정 아이디와\n비밀번호를 입력해 주세요.',
               style: GoogleFonts.roboto(
                   fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black),
             ),
             const SizedBox(height: 32.0),
-            TextField(
-              controller: _emailController,
-              decoration: InputDecoration(
-                labelText: '이메일',
-                prefixIcon: Icon(Icons.email),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10.0),
-                  borderSide: const BorderSide(color: Colors.grey),
+            Row(
+              children: [
+                Expanded(
+                  flex: 4,
+                  child: TextField(
+                    controller: _emailController,
+                    enabled: !_isIdValidated,  // 중복 확인이 완료되면 비활성화
+                    decoration: InputDecoration(
+                      labelText: '아이디',
+                      hintText: '아이디 입력',
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                        borderSide: const BorderSide(color: Colors.grey),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                        borderSide: const BorderSide(color: Colors.teal),
+                      ),
+                      disabledBorder: OutlineInputBorder( // 비활성화 상태의 테두리 스타일
+                        borderRadius: BorderRadius.circular(10.0),
+                        borderSide: const BorderSide(color: Colors.grey),
+                      ),
+                    ),
+                    keyboardType: TextInputType.emailAddress,
+                  ),
                 ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10.0),
-                  borderSide: const BorderSide(color: Colors.teal),
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  onPressed: _isIdValidated ? null : _checkIdDuplication,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _isIdValidated ? Colors.grey : Colors.teal,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10.0),
+                    ),
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  child: const Text('중복확인'),
                 ),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: Text(
+                _idStatusMessage,
+                style: TextStyle(color: _idStatusColor, fontWeight: FontWeight.bold),
               ),
-              keyboardType: TextInputType.emailAddress,
             ),
             const SizedBox(height: 16.0),
-            const Text(
-              '비밀번호',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
             TextField(
               controller: _passwordController,
               decoration: InputDecoration(
@@ -140,10 +187,6 @@ class _EmailAndPasswordScreenState extends State<EmailAndPasswordScreen> {
               ],
             ),
             const SizedBox(height: 16.0),
-            const Text(
-              '비밀번호 확인',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
             TextField(
               controller: _confirmPasswordController,
               decoration: InputDecoration(
@@ -191,4 +234,27 @@ class _EmailAndPasswordScreenState extends State<EmailAndPasswordScreen> {
       ],
     );
   }
+  Future<void> _proceedToProfileCompletion() async {
+    if (_isNextButtonEnabled) {
+      final updatedSignUpData = widget.signUpData.copyWith(
+        accountId: _emailController.text,
+        password: _passwordController.text,
+      );
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ProfileCompletionScreen(signUpData: updatedSignUpData),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Please fill all the fields correctly before proceeding."),
+            duration: Duration(seconds: 2),
+          )
+      );
+    }
+  }
+
 }

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:async';
+import '../../config.dart';
 import 'email_password_screen.dart';
 import 'sign_up_data.dart';
 
@@ -49,8 +50,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       _isSendingVerification = true;
       _verificationMessage = "인증번호 전송 중...";
     });
-
-    final url = Uri.parse('http://144.24.81.53:8080/api/users/sms-certification/send');
+    final url = Uri.parse('${Config.baseUrl}/api/users/sms-certification/send');
     final response = await http.post(
       url,
       headers: {'Content-Type': 'application/json'},
@@ -90,7 +90,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }
 
   Future<void> _verifyCodeAndProceed() async {
-    final url = Uri.parse('http://144.24.81.53:8080/api/users/sms-certification/confirm');
+    final url = Uri.parse('${Config.baseUrl}/api/users/sms-certification/confirm');
     final response = await http.post(
       url,
       headers: {'Content-Type': 'application/json'},

@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../config.dart';
 import '../screens/main/app_state.dart';
 import '../screens/main/user_roles.dart';
 import '../screens/signin/login_screen.dart';
@@ -19,7 +20,7 @@ class AuthProvider with ChangeNotifier {
   User? get currentUser => _currentUser;
 
   Future<void> login(String id, String password, BuildContext context) async {
-    final url = Uri.parse('http://144.24.81.53:8080/api/users/login');
+    final url = Uri.parse('${Config.baseUrl}/api/users/login');
 
     try {
       final response = await http.post(
@@ -30,7 +31,7 @@ class AuthProvider with ChangeNotifier {
           'password': password,
         }),
       );
-
+      print(response.statusCode);
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
 
@@ -126,7 +127,7 @@ class AuthProvider with ChangeNotifier {
     required BuildContext context,
     File? profileImage,
   }) async {
-    final url = Uri.parse('http://144.24.81.53:8080/api/users');
+    final url = Uri.parse('${Config.baseUrl}/api/users');
 
     try {
       var request = http.MultipartRequest('POST', url);

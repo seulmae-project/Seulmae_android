@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sm3/screens/signin/login_screen.dart';
 
 class SignUpCompletionScreen extends StatelessWidget {
   final String name;
@@ -29,8 +30,11 @@ class SignUpCompletionScreen extends StatelessWidget {
               SizedBox(height: 32),
               ElevatedButton(
                 onPressed: () {
-                  // 로그인 화면으로 이동하는 코드 추가
-                  Navigator.pushNamed(context, '/login'); // '/login'은 로그인 화면의 라우트 이름입니다.
+                  // Replace the current screen with the login screen and prevent going back
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => LoginScreen()),
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   padding: EdgeInsets.symmetric(vertical: 14),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../../config.dart';
 import 'email_password_screen.dart';
 import 'sign_up_data.dart';
 
@@ -44,7 +45,7 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
 
   Future<void> _verifyCode() async {
     final authCode = _verificationCodeControllers.map((controller) => controller.text).join();
-    final url = Uri.parse('http://144.24.81.53:8080/api/users/sms-certification/confirm');
+    final url = Uri.parse('${Config.baseUrl}/api/users/sms-certification/confirm');
     final response = await http.post(
       url,
       headers: {'Content-Type': 'application/json'},

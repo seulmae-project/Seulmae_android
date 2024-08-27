@@ -154,27 +154,22 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() {
       _isLoading = true;
     });
+
     String id = _idController.text.trim();
     String password = _passwordController.text.trim();
-    print(id);
-    print(password);
     await authProvider.login(id, password, context);
+
     setState(() {
       _isLoading = false;
     });
+
     if (authProvider.isLoggedIn) {
+      Provider.of<AppState>(context, listen: false).resetState();
       Provider.of<AppState>(context, listen: false).setSelectedIndex(0); // Set initial index to 0 (dashboard)
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => MainScreen()),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('로그인에 실패하였습니다. 아이디와 비밀번호를 확인해주세요.'),
-          duration: Duration(seconds: 2),
-        ),
-      );
+      //Navigator.pushReplacement(
+       // context,
+       // MaterialPageRoute(builder: (context) => MainScreen()),
+    //  );
     }
   }
 }

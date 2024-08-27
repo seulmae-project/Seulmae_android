@@ -49,6 +49,8 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
   int _currentNoticePage = 0;
   Timer? _noticeTimer;
 
+  get workplaces => null;
+
   @override
   void initState() {
     super.initState();
@@ -132,7 +134,7 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
               context,
               MaterialPageRoute(
                 builder: (context) =>
-                    WorkplaceManagementScreen(workplaces: workplaces),
+                    WorkplaceManagementScreen(),
               ),
             );
           },
@@ -292,9 +294,9 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
 class EmployeeProfilePictures extends StatelessWidget {
   final List<Map<String, String>> employees = [
     {'name': 'Employee 1', 'image': 'assets/profile_image_1.png'},
-    {'name': 'Employee 2', 'image': 'assets/profile_image_2.png'},
-    {'name': 'Employee 3', 'image': 'assets/profile_image_3.png'},
-    {'name': 'Employee 4', 'image': 'assets/profile_image_4.png'},
+    {'name': 'Employee 2', 'image': 'assets/profile_image_1.png'},
+    {'name': 'Employee 3', 'image': 'assets/profile_image_1.png'},
+    {'name': 'Employee 4', 'image': 'assets/profile_image_1.png'},
   ];
 
   @override

@@ -1,8 +1,14 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
+import 'package:sm3/screens/main/manage/workplace_employee_list.dart';
+import '../../../config.dart';
+import '../../../providers/auth_provider.dart';
 import '../app_state.dart';
 import '../employee/employee_dashboard_screen.dart';
+import '../setting/settings_screen.dart';
 import '../workplace/workplace_entry_screen.dart';
 import '../workplace/workplace_management_screen.dart';
 import '../notification/notification_screen.dart';
@@ -19,11 +25,15 @@ class ManageDashboardScreenState extends State<ManageDashboardScreen> {
   int _currentNoticePage = 0;
   Timer? _noticeTimer;
   DateTime selectedDate = DateTime.now();
+  List<dynamic> workInfoList = [];
+  List<dynamic> notices = []; // notices 데이터를 저장할 리스트
 
   @override
   void initState() {
     super.initState();
     _startNoticeTimer();
+    _fetchWorkInfoList();
+    _fetchNotices(); // notices 데이터를 가져오는 함수 호출
   }
 
   @override
@@ -46,36 +56,104 @@ class ManageDashboardScreenState extends State<ManageDashboardScreen> {
     });
   }
 
-  void _onApprove() {
-    if (_pageController.hasClients) {
-      _pageController.nextPage(
-        duration: Duration(milliseconds: 300),
-        curve: Curves.easeIn,
-      );
+  Future<void> _fetchWorkInfoList() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final selectedWorkplaceId = authProvider.selectedWorkplaceId;
+
+    if (authProvider.isTokenExpired()) {
+      bool refreshed = await authProvider.refreshAccessToken();
+      print("refreshed");
+      print(refreshed);
+      if (!refreshed) {
+        throw Exception('Failed to refresh token');
+      }
+    }
+
+    final accessToken = authProvider.accessToken;
+    final String date = selectedDate.toIso8601String().split('T')[0];
+
+    final response = await http.get(
+      Uri.parse('${Config.baseUrl}/api/attendance/v1/main/manager?workplace=$selectedWorkplaceId&localDate=$date'),
+      headers: {
+        'Authorization': 'Bearer $accessToken',
+      },
+    );
+
+    print(response.body);
+
+    if (response.statusCode == 200) {
+      setState(() {
+        workInfoList = jsonDecode(response.body)['data'];
+      });
+    } else {
+      print('Failed to load work info');
     }
   }
 
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: selectedDate,
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2030),
+  // Notices 정보를 가져오는 함수
+  Future<void> _fetchNotices() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final selectedWorkplaceId = authProvider.selectedWorkplaceId;
+    if (authProvider.isTokenExpired()) {
+      bool refreshed = await authProvider.refreshAccessToken();
+      if (!refreshed) {
+        throw Exception('Failed to refresh token');
+      }
+    }
+
+    final accessToken = authProvider.accessToken;
+
+    final response = await http.get(
+      Uri.parse('${Config.baseUrl}/api/announcement/v1/list/important?workplaceId=$selectedWorkplaceId'),
+      headers: {
+        'Authorization': 'Bearer $accessToken',
+      },
     );
-    if (picked != null && picked != selectedDate)
+
+    print("response.body");
+    print(response.body);
+
+    if (response.statusCode == 200) {
       setState(() {
-        selectedDate = picked;
+        notices = jsonDecode(response.body)['data'];
       });
+    } else {
+      print('Failed to load notices');
+    }
+  }
+
+  void _onApprove(int attendanceRequestHistoryId) {
+    print("승인 처리 ID: $attendanceRequestHistoryId");
+  }
+
+  void _previousDay() {
+    setState(() {
+      selectedDate = selectedDate.subtract(Duration(days: 1));
+    });
+    _fetchWorkInfoList();
+  }
+
+  void _nextDay() {
+    setState(() {
+      selectedDate = selectedDate.add(Duration(days: 1));
+    });
+    _fetchWorkInfoList();
   }
 
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
+    if (appState.selectedWorkplace.isEmpty) {
+      print(appState.selectedWorkplace);
+      WorkplaceManagementScreen.fetchWorkplaces(context);
+    }
 
     return WillPopScope(
       onWillPop: () async {
         DateTime now = DateTime.now();
-        if (appState.currentBackPressTime == null || now.difference(appState.currentBackPressTime!) > Duration(seconds: 2)) {
+        if (appState.currentBackPressTime == null ||
+            now.difference(appState.currentBackPressTime!) >
+                Duration(seconds: 2)) {
           appState.setCurrentBackPressTime(now);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('한 번 더 누르시면 앱이 종료됩니다.')),
@@ -97,8 +175,7 @@ class ManageDashboardScreenState extends State<ManageDashboardScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) =>
-                        WorkplaceManagementScreen(workplaces: workplaces),
+                    builder: (context) => WorkplaceManagementScreen(),
                   ),
                 );
               },
@@ -130,34 +207,33 @@ class ManageDashboardScreenState extends State<ManageDashboardScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                EmployeeProfilePictures(),
-                NoticeSection(
-                  pageController: _pageController,
-                  currentNoticePage: _currentNoticePage,
-                  notices: notices,
-                  onPageChanged: (index) {
-                    setState(() {
-                      _currentNoticePage = index;
-                    });
-                  },
-                ),
+                WorkplaceEmployeeList(), // Added here
+                if (notices.isNotEmpty) // notices 데이터가 있을 때만 노출
+                  NoticeSection(
+                    pageController: _pageController,
+                    currentNoticePage: _currentNoticePage,
+                    notices: notices.map((notice) => notice['title'] as String).toList(),
+                    onPageChanged: (index) {
+                      setState(() {
+                        _currentNoticePage = index;
+                      });
+                    },
+                  ),
                 SizedBox(height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      '금일의 근무를 확인해주세요',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    IconButton(
+                      icon: Icon(Icons.arrow_left),
+                      onPressed: _previousDay,
                     ),
-                    TextButton(
-                      onPressed: () => _selectDate(context),
-                      child: Text(
-                        "${selectedDate.toLocal()}".split(' ')[0],
-                        style: TextStyle(fontSize: 16),
-                      ),
+                    Text(
+                      "${selectedDate.toLocal()}".split(' ')[0],
+                      style: TextStyle(fontSize: 16),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.arrow_right),
+                      onPressed: _nextDay,
                     ),
                   ],
                 ),
@@ -227,13 +303,7 @@ class ManageDashboardScreenState extends State<ManageDashboardScreen> {
                   itemCount: workInfoList.length,
                   itemBuilder: (context, index) {
                     final workInfo = workInfoList[index];
-                    return _buildWorkInfoCard(
-                      workInfo['name']!,
-                      workInfo['totalHours']!,
-                      workInfo['checkInTime']!,
-                      workInfo['checkOutTime']!,
-                      workInfo['profileImagePath']!,
-                    );
+                    return _buildWorkInfoCard(workInfo);
                   },
                 ),
               ],
@@ -244,7 +314,15 @@ class ManageDashboardScreenState extends State<ManageDashboardScreen> {
     );
   }
 
-  Widget _buildWorkInfoCard(String name, String totalHours, String checkInTime, String checkOutTime, String profileImagePath) {
+  Widget _buildWorkInfoCard(Map<String, dynamic> workInfo) {
+    String name = workInfo['userName'];
+    String totalHours = workInfo['totalWorkTime'].toString() + '시간';
+    String checkInTime = workInfo['workStartTime'].split('T')[1].substring(0, 5);
+    String checkOutTime = workInfo['workEndTime'].split('T')[1].substring(0, 5);
+    String profileImagePath = workInfo['userImageUrl'];
+    bool isApproved = workInfo['isRequestApprove'];
+    int attendanceRequestHistoryId = workInfo['attendanceRequestHistoryId'];
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Container(
@@ -267,7 +345,7 @@ class ManageDashboardScreenState extends State<ManageDashboardScreen> {
             Row(
               children: [
                 CircleAvatar(
-                  backgroundImage: AssetImage(profileImagePath),
+                  backgroundImage: NetworkImage(profileImagePath),
                   radius: 20,
                 ),
                 SizedBox(width: 8),
@@ -277,46 +355,38 @@ class ManageDashboardScreenState extends State<ManageDashboardScreen> {
                 ),
                 Spacer(),
                 Text(
-                  '미완료',
+                  isApproved ? '완료' : '미완료',
                   style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.blueAccent,
+                    color: isApproved ? Colors.green : Colors.red,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ],
             ),
             SizedBox(height: 8),
-            Text(
-              '총 시간: $totalHours',
-              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-            ),
-            Text(
-              '출근: $checkInTime',
-              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-            ),
-            Text(
-              '퇴근: $checkOutTime',
-              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-            ),
+            Text('총 근무 시간: $totalHours'),
+            SizedBox(height: 4),
+            Text('출근 시간: $checkInTime'),
+            SizedBox(height: 4),
+            Text('퇴근 시간: $checkOutTime'),
             SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                ElevatedButton(
-                  onPressed: _onApprove,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blueAccent,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.0),
-                    ),
+                TextButton(
+                  onPressed: () => _onApprove(attendanceRequestHistoryId),
+                  child: Text(
+                    '승인',
+                    style: TextStyle(color: Colors.blue),
                   ),
-                  child: Text('승인'),
                 ),
-                SizedBox(width: 8),
-                ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.grey,
+                TextButton(
+                  onPressed: () {
+                    // 수정 로직 추가
+                  },
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    backgroundColor: Colors.blueAccent,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8.0),
                     ),
@@ -352,21 +422,3 @@ class ManageDashboardScreenState extends State<ManageDashboardScreen> {
     }
   }
 }
-
-const workInfoList = [
-  {
-    'name': '조원호',
-    'totalHours': '10시간',
-    'checkInTime': 'AM 10:20',
-    'checkOutTime': 'PM 20:20',
-    'profileImagePath': 'assets/profile_image_1.png',
-  },
-  {
-    'name': '김영호',
-    'totalHours': '10시간',
-    'checkInTime': 'AM 10:20',
-    'checkOutTime': 'PM 20:20',
-    'profileImagePath': 'assets/profile_image_1.png',
-  },
-  // 더 많은 근무 정보를 추가하세요.
-];

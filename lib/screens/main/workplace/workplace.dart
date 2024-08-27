@@ -11,4 +11,12 @@ class Workplace {
     required this.address,
     required this.profileImagePath
   });
+  factory Workplace.fromJson(Map<String, dynamic> json) {
+    return Workplace(
+      name: json['workplaceName'],
+      phoneNumber: json['workplaceName'],
+      address: json['address'],
+      profileImagePath: json['workplaceName'],
+    );
+  }
 }

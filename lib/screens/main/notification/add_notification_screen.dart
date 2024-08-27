@@ -1,4 +1,10 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
+
+import '../../../config.dart';
+import '../../../providers/auth_provider.dart';
 
 class AddNotificationScreen extends StatefulWidget {
   @override
@@ -9,6 +15,60 @@ class _AddNotificationScreenState extends State<AddNotificationScreen> {
   String _category = '일반';
   TextEditingController _titleController = TextEditingController();
   TextEditingController _contentController = TextEditingController();
+
+  Future<void> _submitNotification() async {
+    final String title = _titleController.text;
+    final String content = _contentController.text;
+    final bool isImportant = _category == '필독';
+
+    if (title.isEmpty || content.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('제목과 내용을 모두 입력해주세요.')),
+      );
+      return;
+    }
+
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final selectedWorkplaceId = authProvider.selectedWorkplaceId;
+
+    // Check and refresh token if expired
+    if (authProvider.isTokenExpired()) {
+      bool refreshed = await authProvider.refreshAccessToken();
+      if (!refreshed) {
+        throw Exception('Failed to refresh token');
+      }
+    }
+    final accessToken = authProvider.accessToken;
+
+    try {
+      final response = await http.post(
+        Uri.parse('${Config.baseUrl}/api/announcement/v1'),
+        headers: {
+          'Authorization': 'Bearer $accessToken',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'workplaceId': selectedWorkplaceId,
+          'title': title,
+          'content': content,
+          'isImportant': isImportant,
+        }),
+      );
+
+      if (response.statusCode == 201) {
+        Navigator.pop(context, true); // Notify the caller about the success
+      } else {
+        final responseData = json.decode(response.body);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('오류: ${responseData['message']}')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('서버와의 통신 중 오류가 발생했습니다.')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -69,10 +129,7 @@ class _AddNotificationScreenState extends State<AddNotificationScreen> {
             ),
             Spacer(),
             ElevatedButton(
-              onPressed: () {
-                // Save the new notification (this is where you add your saving logic)
-                Navigator.pop(context);
-              },
+              onPressed: _submitNotification,
               child: Text('저장'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blueAccent,

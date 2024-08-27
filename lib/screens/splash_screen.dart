@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/auth_provider.dart';
+import 'package:sm3/providers/auth_provider.dart';
+import 'package:sm3/screens/main/no_workplace_screen.dart';
 import 'main/main_screen.dart';
+import 'main/workplace/regist_work_place.dart';
 import 'signin/login_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -13,30 +15,39 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    // 빌드가 완료된 후에 _redirectToNextScreen을 호출합니다.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _redirectToNextScreen();
     });
   }
 
   void _redirectToNextScreen() async {
-    await Future.delayed(Duration(seconds: 2));
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    await authProvider.loadUserRole();
+    await authProvider.loadUserData();
+
     if (authProvider.isLoggedIn) {
-      Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => MainScreen()));
+      bool hasWorkplaces = await authProvider.userFetchWorkplaces(context);
+      if (hasWorkplaces) {
+
+        _navigateToScreen(MainScreen());
+      } else {
+        _navigateToScreen(NoWorkplaceScreen());
+      }
     } else {
-      Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => LoginScreen()));
+      _navigateToScreen(LoginScreen());
     }
+  }
+
+  void _navigateToScreen(Widget screen) {
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (context) => screen),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Center(
-        child: CircularProgressIndicator(), // 로딩 인디케이터 추가
-      ),
+      body: Center(child: CircularProgressIndicator()),
     );
   }
 }

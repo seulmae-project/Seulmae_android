@@ -2,14 +2,29 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../providers/auth_provider.dart';
 import '../app_state.dart';
-import 'workplace.dart';
+import '../no_workplace_screen.dart';
+import '../user_workplace_info.dart';
+import 'api_workplace.dart';
 import 'regist_work_place.dart';
 
 class WorkplaceManagementScreen extends StatefulWidget {
-  final List<Workplace> workplaces;
-
-  const WorkplaceManagementScreen({Key? key, required this.workplaces}) : super(key: key);
-
+  const WorkplaceManagementScreen({Key? key}) : super(key: key);
+  static Future<void> fetchWorkplaces(BuildContext context) async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final fetched = await authProvider.userFetchWorkplaces(context);
+    if (fetched) {
+      final appState = Provider.of<AppState>(context, listen: false);
+      final _workplaces = authProvider.workplaces;
+      final selectedWorkplaceIndex = _workplaces.indexWhere((workplace) => workplace.workplaceId == authProvider.selectedWorkplaceId);
+      if (selectedWorkplaceIndex != -1) {
+        appState.setSelectedWorkplace(_workplaces[selectedWorkplaceIndex].workplaceName);
+      }
+    } else {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => NoWorkplaceScreen()),
+      );
+    }
+  }
   @override
   _WorkplaceManagementScreenState createState() => _WorkplaceManagementScreenState();
 }
@@ -17,18 +32,40 @@ class WorkplaceManagementScreen extends StatefulWidget {
 class _WorkplaceManagementScreenState extends State<WorkplaceManagementScreen> {
   int? selectedWorkplaceIndex;
   bool isDeleteMode = false;
+  List<UserWorkplaceInfo> _workplaces = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    final appState = Provider.of<AppState>(context, listen: false);
-    selectedWorkplaceIndex = widget.workplaces.indexWhere((workplace) => workplace.name == appState.selectedWorkplace);
+    _fetchWorkplaces();
+  }
+
+  Future<void> _fetchWorkplaces() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final fetched = await authProvider.userFetchWorkplaces(context);
+    if (fetched) {
+      setState(() {
+        _workplaces = authProvider.workplaces;
+        _isLoading = false;
+
+        final appState = Provider.of<AppState>(context, listen: false);
+        // Update selectedWorkplaceIndex based on the loaded selectedWorkplaceId
+        selectedWorkplaceIndex = _workplaces.indexWhere((workplace) => workplace.workplaceId == authProvider.selectedWorkplaceId);
+        if (selectedWorkplaceIndex != -1) {
+          appState.setSelectedWorkplace(_workplaces[selectedWorkplaceIndex!].workplaceName);
+        }
+      });
+    } else {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => NoWorkplaceScreen()),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
     return Scaffold(
       appBar: AppBar(
@@ -48,7 +85,7 @@ class _WorkplaceManagementScreenState extends State<WorkplaceManagementScreen> {
                     builder: (context) => RegistWorkPlaceScreen(),
                   ),
                 ).then((value) {
-                  // RegistWorkPlaceScreen에서 추가 완료 후 처리할 로직
+                  _fetchWorkplaces(); // 새로 등록 후 목록 갱신
                 });
               }
             },
@@ -64,23 +101,23 @@ class _WorkplaceManagementScreenState extends State<WorkplaceManagementScreen> {
             ),
         ],
       ),
-      body: widget.workplaces.isEmpty
-          ? Center(
-        child: Text('등록된 근무지가 없습니다.'),
-      )
+      body: _isLoading
+          ? Center(child: CircularProgressIndicator())
+          : _workplaces.isEmpty
+          ? Center(child: Text('등록된 근무지가 없습니다.'))
           : ListView.builder(
-        itemCount: widget.workplaces.length,
+        itemCount: _workplaces.length,
         itemBuilder: (context, index) {
-          Workplace workplace = widget.workplaces[index];
+          UserWorkplaceInfo workplace = _workplaces[index];
           bool isSelected = selectedWorkplaceIndex == index;
 
           return ListTile(
-            title: Text(workplace.name),
+            title: Text(workplace.workplaceName),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('핸드폰 번호: ${workplace.phoneNumber}'),
-                Text('주소: ${workplace.address}'),
+                Text('핸드폰 번호: ${workplace.workplaceTel}'),
+                Text('주소: ${workplace.address.mainAddress} ${workplace.address.subAddress}'),
               ],
             ),
             trailing: isDeleteMode
@@ -93,21 +130,26 @@ class _WorkplaceManagementScreenState extends State<WorkplaceManagementScreen> {
                 : Radio<int>(
               value: index,
               groupValue: selectedWorkplaceIndex,
-              onChanged: (int? value) {
-                setState(() {
-                  selectedWorkplaceIndex = value;
-                  appState.setSelectedWorkplace(workplace.name);
-                  authProvider.updateUserRole(workplace.name);
-                });
+              onChanged: (int? value) async {
+                if (value != null) {
+                  setState(() {
+                    selectedWorkplaceIndex = value;
+                  });
+                  final selectedWorkplace = _workplaces[value];
+                  await Provider.of<AuthProvider>(context, listen: false).saveSelectedWorkplaceId(selectedWorkplace.workplaceId);
+                  appState.setSelectedWorkplace(selectedWorkplace.workplaceName);
+                }
               },
             ),
-            onTap: () {
+
+            onTap: () async {
               if (!isDeleteMode) {
                 setState(() {
                   selectedWorkplaceIndex = index;
-                  appState.setSelectedWorkplace(workplace.name);
-                  authProvider.updateUserRole(workplace.name);
                 });
+                final selectedWorkplace = _workplaces[index];
+                await Provider.of<AuthProvider>(context, listen: false).saveSelectedWorkplaceId(selectedWorkplace.workplaceId);
+                appState.setSelectedWorkplace(selectedWorkplace.workplaceName);
               }
             },
           );
@@ -115,8 +157,7 @@ class _WorkplaceManagementScreenState extends State<WorkplaceManagementScreen> {
       ),
     );
   }
-
-  void _showDeleteConfirmationDialog(Workplace workplace) {
+  void _showDeleteConfirmationDialog(UserWorkplaceInfo workplace) {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -133,11 +174,16 @@ class _WorkplaceManagementScreenState extends State<WorkplaceManagementScreen> {
             ),
             TextButton(
               child: Text('삭제', style: TextStyle(color: Colors.red)),
-              onPressed: () {
-                setState(() {
-                  widget.workplaces.remove(workplace);
-                });
-                Navigator.of(context).pop();
+              onPressed: () async {
+                Navigator.of(context).pop(); // Close the dialog
+                final success = await ApiWorkplace.deleteWorkplace(context, workplace.workplaceId);
+                if (success) {
+                  _fetchWorkplaces(); // Refresh the list after successful deletion
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('근무지 삭제 실패')),
+                  );
+                }
               },
             ),
           ],
@@ -145,4 +191,6 @@ class _WorkplaceManagementScreenState extends State<WorkplaceManagementScreen> {
       },
     );
   }
+
+
 }

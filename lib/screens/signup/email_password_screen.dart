@@ -66,11 +66,24 @@ class _EmailAndPasswordScreenState extends State<EmailAndPasswordScreen> {
   }
 
   Future<void> _checkIdDuplication() async {
+    final email = _emailController.text;
+
+    // Check if the email length is less than 5 characters
+    if (email.length < 5) {
+      setState(() {
+        _isIdValidated = false;
+        _idStatusMessage = "아이디는 5글자 이상이어야 합니다.";
+        _idStatusColor = Colors.red;
+      });
+      return;  // Exit the function early if the condition is not met
+    }
+
     var response = await http.post(
       Uri.parse('${Config.baseUrl}/api/users/id/duplication'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'accountId': _emailController.text}),
+      body: jsonEncode({'accountId': email}),
     );
+
     if (response.statusCode == 200) {
       var data = jsonDecode(response.body);
       bool isDuplicated = data['data']['duplicated'];
@@ -86,6 +99,7 @@ class _EmailAndPasswordScreenState extends State<EmailAndPasswordScreen> {
       });
     }
   }
+
 
   @override
   void dispose() {

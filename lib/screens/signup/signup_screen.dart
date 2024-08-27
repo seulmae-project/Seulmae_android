@@ -56,7 +56,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
       headers: {'Content-Type': 'application/json'},
       body: json.encode({'phoneNumber': _phoneNumberController.text}),
     );
-
     if (response.statusCode == 200) {
       setState(() {
         _isVerificationSent = true;
@@ -190,7 +189,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   ),
                   child: Text(
                     _isVerificationSent
-                        ? '재전송 (${_remainingSeconds ~/ 60}:${(_remainingSeconds % 60).toString().padLeft(2, '0')})'
+                        ? '재전송'
                         : '인증번호 받기',
                   ),
                 ),

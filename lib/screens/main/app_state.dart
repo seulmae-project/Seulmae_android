@@ -1,21 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:sm3/screens/main/user_workplace_info.dart';
 import 'user_roles.dart';
 
 class AppState extends ChangeNotifier {
   int selectedIndex = 0;
+  UserWorkplaceInfo? currentWorkplace;
+
+
+
+  void setSelectedIndex(int index) {
+    selectedIndex = index;
+    notifyListeners();
+  }
+
+  void setCurrentWorkplace(UserWorkplaceInfo workplace) {
+    currentWorkplace = workplace;
+    notifyListeners();
+  }
+
   DateTime selectedDate = DateTime.now();
   DateTime? currentBackPressTime;
-  String selectedWorkplace = '근무지 A';
+  String selectedWorkplace = '';
   User? currentUser;
   String userRole = 'employee'; // 기본 역할
 
   final PageController pageController = PageController();
   int currentPage = 0;
 
-  void setSelectedIndex(int index) {
-    selectedIndex = index;
-    notifyListeners();
-  }
+
 
   void setSelectedWorkplace(String workplace) {
     selectedWorkplace = workplace;
@@ -59,6 +71,18 @@ class AppState extends ChangeNotifier {
     } else {
       userRole = 'employee'; // 기본 역할
     }
+    notifyListeners();
+  }
+  void resetState() {
+    selectedIndex = 0;
+    currentWorkplace = null;
+    selectedDate = DateTime.now();
+    currentBackPressTime = null;
+    selectedWorkplace = '';
+    currentUser = null;
+    userRole = 'employee'; // 기본 역할
+    pageController.dispose();
+    currentPage = 0;
     notifyListeners();
   }
 }

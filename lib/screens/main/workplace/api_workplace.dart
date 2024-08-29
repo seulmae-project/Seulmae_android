@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import '../../../config.dart';
 import '../../../providers/auth_provider.dart';
 import '../main_screen.dart';
+import 'detail_info_workplace.dart';
 import 'detail_workplace.dart';
 import 'package:http_parser/http_parser.dart';  // 추가된 라이브러리
 import 'dart:typed_data';
@@ -29,9 +30,8 @@ class ApiWorkplace {
         Uri.parse('${Config.baseUrl}/api/workplace/v1/info/all'),
         headers: {'Authorization': 'Bearer $accessToken'}
     );
-    print(response.body);
     if (response.statusCode == 201) {
-
+      print(response.body);
       List jsonResponse = json.decode(utf8.decode(response.bodyBytes))['data'] as List;
       return jsonResponse.map((data) {
         return DetailWorkplace.fromJson(data as Map<String, dynamic>);
@@ -56,13 +56,22 @@ class ApiWorkplace {
       headers: {'Authorization': 'Bearer $accessToken'},
     );
 
-    // JSON 데이터가 한글 인코딩 문제를 겪는 경우 utf8 디코딩
     final Map<String, dynamic> jsonResponse = json.decode(utf8.decode(response.bodyBytes));
     print(jsonResponse); // Log the entire JSON response for debugging
 
     if (response.statusCode == 200) {
       if (jsonResponse['data'] != null) {
-        return DetailWorkplace.fromJson(jsonResponse['data']);
+        // 변환 로직 추가
+        final detailInfoWorkplace = DetailInfoWorkplace.fromJson(jsonResponse['data']);
+        return DetailWorkplace(
+          workplaceId: detailInfoWorkplace.workplaceId,
+          workplaceCode: detailInfoWorkplace.workplaceCode,
+          workplaceName: detailInfoWorkplace.workplaceName,
+          workplaceTel: detailInfoWorkplace.workplaceTel,
+          workplaceImageUrl: detailInfoWorkplace.workplaceImageUrl,
+          mainAddress: detailInfoWorkplace.mainAddress,
+          subAddress: detailInfoWorkplace.subAddress,
+        );
       } else {
         throw Exception('No data found in response');
       }
@@ -97,10 +106,8 @@ class ApiWorkplace {
         'workplaceId': workplaceId, // JSON으로 변환할 데이터
       }),
     );
-
-    print(response.request);
+    print("response.body");
     print(response.body);
-
     if (response.statusCode == 200 || response.statusCode == 201) {
       showDialog(
         context: context,
@@ -228,8 +235,6 @@ class ApiWorkplace {
       // Check and refresh token if expired
       if (authProvider.isTokenExpired()) {
         bool refreshed = await authProvider.refreshAccessToken();
-        print("refreshed");
-        print(refreshed);
         if (!refreshed) {
           throw Exception('Failed to refresh token');
         }
@@ -243,19 +248,25 @@ class ApiWorkplace {
         },
       );
 
-
+      print(response.body);
       if (response.statusCode == 200) {
-        // Show success message
-        _showMessageDialog(context, 'Workplace successfully deleted.');
+        // Use the root context to avoid using a disposed context
+        if (context.mounted) {  // Ensure context is still valid
+          _showMessageDialog(context, 'Workplace successfully deleted.');
+        }
         return true;
       } else {
         print('Error deleting workplace: ${response.body}');
-        _showMessageDialog(context, 'Failed to delete workplace.');
+        if (context.mounted) {  // Ensure context is still valid
+          _showMessageDialog(context, 'Failed to delete workplace.');
+        }
         return false;
       }
     } catch (e) {
       print('Error deleting workplace: $e');
-      _showMessageDialog(context, 'Error deleting workplace: $e');
+      if (context.mounted) {  // Ensure context is still valid
+        _showMessageDialog(context, 'Error deleting workplace: $e');
+      }
       return false;
     }
   }

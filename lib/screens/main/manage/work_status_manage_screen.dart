@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sm3/screens/main/manage/work_detail_screen.dart';
+import 'package:tmfao3/screens/main/manage/work_detail_screen.dart';
 import '../constants.dart';
 import 'employee_detail_screen.dart';
 import 'manage_mock_data.dart'; // import mock data

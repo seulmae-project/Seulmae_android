@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:sm3/screens/main/setting/profile_image_picker.dart';
+import 'package:tmfao3/screens/main/setting/profile_image_picker.dart';
 import 'dart:io';
 import 'settings_screen.dart';
 

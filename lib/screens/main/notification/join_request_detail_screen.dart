@@ -60,7 +60,8 @@ class _JoinRequestDetailScreenState extends State<JoinRequestDetailScreen> {
         'Authorization': 'Bearer $accessToken',
       },
     );
-
+    print('123123123123123');
+    print(response.body);
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       setState(() {
@@ -83,9 +84,16 @@ class _JoinRequestDetailScreenState extends State<JoinRequestDetailScreen> {
     final baseWage = int.tryParse(_baseWageController.text);
     final memo = _memoController.text;
 
-    if (payday == null || baseWage == null) {
+    if (payday == null || payday < 1 || payday > 31) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('유효한 숫자를 입력하세요.')),
+        SnackBar(content: Text('유효한 급여일을 입력하세요. (1~31)')),
+      );
+      return;
+    }
+
+    if (baseWage == null || baseWage < 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('유효한 기본 시급을 입력하세요. (양수)')),
       );
       return;
     }
@@ -100,23 +108,25 @@ class _JoinRequestDetailScreenState extends State<JoinRequestDetailScreen> {
     }
 
     final accessToken = authProvider.accessToken;
+
+    final requestBody = {
+      'workplaceScheduleId': _selectedScheduleId,
+      'payday': payday,
+      'baseWage': baseWage,
+      'memo': memo,
+    };
+
     final response = await http.post(
-      Uri.parse('${Config.baseUrl}/api/workplace/join/v1/approval'),
+      Uri.parse('${Config.baseUrl}/api/workplace/join/v1/approval?workplaceApproveId=${widget.workplaceApproveId}'),
       headers: {
         'Authorization': 'Bearer $accessToken',
         'Content-Type': 'application/json',
       },
-      body: json.encode({
-        'workplaceApproveId': widget.workplaceApproveId,
-        'workplaceScheduleId': _selectedScheduleId,
-        'payday': payday,
-        'baseWage': baseWage,
-        'memo': memo,
-      }),
+      body: json.encode(requestBody),
     );
-
+    print(response.body);
     if (response.statusCode == 200) {
-      Navigator.pop(context); // 성공 시 화면 닫기
+      Navigator.pop(context, true); // 성공 시 true 반환
     } else {
       throw Exception('승인 요청 실패');
     }
@@ -140,12 +150,13 @@ class _JoinRequestDetailScreenState extends State<JoinRequestDetailScreen> {
       },
     );
 
-    if (response.statusCode == 200) {
-      Navigator.pop(context); // 성공 시 화면 닫기
+    if (response.statusCode == 201) {
+      Navigator.pop(context, true); // 성공 시 true 반환
     } else {
       throw Exception('거절 요청 실패');
     }
   }
+
 
   String formatDate(String date) {
     final inputFormat = DateFormat('yyyy-MM-dd');
@@ -169,7 +180,7 @@ class _JoinRequestDetailScreenState extends State<JoinRequestDetailScreen> {
           fontWeight: FontWeight.bold,
         ),
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -220,7 +231,7 @@ class _JoinRequestDetailScreenState extends State<JoinRequestDetailScreen> {
             _buildTextField(controller: _baseWageController, label: '기본 시급', hintText: '기본 시급을 입력하세요 (예: 10000)'),
             SizedBox(height: 15),
             _buildTextField(controller: _memoController, label: '메모', hintText: '메모를 입력하세요', maxLines: 5),
-            Spacer(),
+            SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [

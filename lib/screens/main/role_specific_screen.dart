@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
-import 'package:sm3/screens/main/setting/settings_screen.dart';
+import 'package:tmfao3/screens/main/setting/settings_screen.dart';
 import 'app_state.dart';
 import 'employee/employee_dashboard_screen.dart';
 import 'employee/work_status_screen.dart';

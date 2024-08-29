@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../providers/auth_provider.dart';
 import '../app_state.dart';
+import '../main_screen.dart';
 import '../no_workplace_screen.dart';
 import '../user_workplace_info.dart';
 import 'api_workplace.dart';
@@ -136,10 +137,17 @@ class _WorkplaceManagementScreenState extends State<WorkplaceManagementScreen> {
                     selectedWorkplaceIndex = value;
                   });
                   final selectedWorkplace = _workplaces[value];
-                  await Provider.of<AuthProvider>(context, listen: false).saveSelectedWorkplaceId(selectedWorkplace.workplaceId);
+                  await Provider.of<AuthProvider>(context, listen: false)
+                      .saveSelectedWorkplaceId(selectedWorkplace.workplaceId);
                   appState.setSelectedWorkplace(selectedWorkplace.workplaceName);
+
+                  // Navigate to MainScreen after selecting a new workplace
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(builder: (context) => MainScreen()),
+                  );
                 }
               },
+
             ),
 
             onTap: () async {
@@ -148,8 +156,14 @@ class _WorkplaceManagementScreenState extends State<WorkplaceManagementScreen> {
                   selectedWorkplaceIndex = index;
                 });
                 final selectedWorkplace = _workplaces[index];
-                await Provider.of<AuthProvider>(context, listen: false).saveSelectedWorkplaceId(selectedWorkplace.workplaceId);
+                await Provider.of<AuthProvider>(context, listen: false)
+                    .saveSelectedWorkplaceId(selectedWorkplace.workplaceId);
                 appState.setSelectedWorkplace(selectedWorkplace.workplaceName);
+
+                // Navigate to MainScreen after selecting a new workplace
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (context) => MainScreen()),
+                );
               }
             },
           );

@@ -1,10 +1,9 @@
-import 'dart:typed_data';  // 이 라인을 유지하여 올바른 Uint8List를 사용합니다.
-import 'package:http/http.dart' as http;
-import 'package:provider/provider.dart';
+import 'dart:typed_data';  // Uint8List import
 import 'package:flutter/material.dart';
-import '../../../providers/auth_provider.dart';
+import 'package:provider/provider.dart';
 import 'api_workplace.dart';
 import 'detail_workplace.dart';
+import '../../../providers/auth_provider.dart';
 
 class WorkplaceDetailsScreen extends StatefulWidget {
   final int workplaceId;
@@ -55,6 +54,9 @@ class _WorkplaceDetailsScreenState extends State<WorkplaceDetailsScreen> {
             return Center(child: Text("Error: ${snapshot.error}"));
           } else if (snapshot.hasData && snapshot.data != null) {
             final detailWorkplace = snapshot.data!;
+            print(detailWorkplace.workplaceImageUrl);
+            print("detailWorkplace.workplaceImageUrl");
+            print(detailWorkplace.workplaceImageUrl);
             return SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -64,8 +66,8 @@ class _WorkplaceDetailsScreenState extends State<WorkplaceDetailsScreen> {
                       SizedBox(
                         height: MediaQuery.of(context).size.height * 0.4,
                         width: double.infinity,
-                        child: (detailWorkplace.workplaceImageUrl != null &&
-                            detailWorkplace.workplaceImageUrl!.isNotEmpty)
+                        child: detailWorkplace.workplaceImageUrl != null &&
+                            detailWorkplace.workplaceImageUrl!.isNotEmpty
                             ? FutureBuilder<Uint8List?>(
                           future: ApiWorkplace.fetchImageWithAuth(
                               detailWorkplace.workplaceImageUrl![0], authProvider.accessToken),
@@ -73,9 +75,7 @@ class _WorkplaceDetailsScreenState extends State<WorkplaceDetailsScreen> {
                             if (snapshot.connectionState == ConnectionState.waiting) {
                               return Center(child: CircularProgressIndicator());
                             } else if (snapshot.hasError || !snapshot.hasData) {
-                              return Container(
-                                child: Center(child: Text('Failed to load image')),
-                              );
+                              return Center(child: Text('Failed to load image'));
                             } else {
                               return Image.memory(
                                 snapshot.data!,
@@ -85,11 +85,13 @@ class _WorkplaceDetailsScreenState extends State<WorkplaceDetailsScreen> {
                           },
                         )
                             : Container(
+                          color: Colors.grey[300],
                           child: Center(
                             child: Image.asset(
-                            'assets/profile_image_1.png',
-                            fit: BoxFit.cover,
-                          ),),
+                              'assets/profile_image_1.png',
+                              fit: BoxFit.cover,
+                            ),
+                          ),
                         ),
                       ),
                     ],
@@ -162,7 +164,7 @@ class _WorkplaceDetailsScreenState extends State<WorkplaceDetailsScreen> {
               ),
             );
           } else {
-            return SizedBox.shrink(); // 데이터가 없을 때 버튼을 숨깁니다.
+            return SizedBox.shrink();
           }
         },
       ),

@@ -4,6 +4,8 @@ import 'package:table_calendar/table_calendar.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';  // intl 패키지 import 추가
 import '../employee_detail_screen.dart';
+import '../manage/workplace_employee_list.dart';
+import '../notification/notice_section.dart';
 import '../notification/notification_screen.dart';
 import '../workplace/workplace.dart';
 import '../workplace/workplace_entry_screen.dart';
@@ -18,15 +20,7 @@ final List<String> notices = [
   '공지사항 3',
 ];
 
-final Map<DateTime, List<String>> _holidays = {
-  DateTime.utc(2024, 1, 1): ['New Year\'s Day'],
-  DateTime.utc(2024, 3, 1): ['삼일절'],
-  DateTime.utc(2024, 5, 5): ['어린이날'],
-  DateTime.utc(2024, 6, 6): ['현충일'],
-  DateTime.utc(2024, 8, 15): ['광복절'],
-  DateTime.utc(2024, 10, 3): ['개천절'],
-  DateTime.utc(2024, 12, 25): ['Christmas Day'],
-};
+
 
 final Map<DateTime, int> dailyAmounts = {
   DateTime.utc(2024, 8, 1): 20000,
@@ -80,7 +74,9 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
-
+    if (appState.selectedWorkplace.isEmpty) {
+      WorkplaceManagementScreen.fetchWorkplaces(context);
+    }
     return ChangeNotifierProvider(
       create: (_) => CheckInOut(),
       child: WillPopScope(
@@ -89,7 +85,7 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
           appBar: _buildAppBar(context, appState),
           body: Column(
             children: <Widget>[
-              EmployeeProfilePictures(),
+              WorkplaceEmployeeList(),
               NoticeSection(
                 pageController: _pageController,
                 currentNoticePage: _currentNoticePage,
@@ -104,8 +100,10 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8.0),
                   child: Container(
-                    height: MediaQuery.of(context).size.height * 0.4,
-                    child: _buildCalendar(),
+                    height: MediaQuery
+                        .of(context)
+                        .size
+                        .height * 0.4,
                   ),
                 ),
               ),
@@ -153,7 +151,7 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => NotificationScreen(),
+                builder: (context) => NotificationScreen(isManager: false),
               ),
             );
           },
@@ -178,237 +176,5 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
     }
 
     return true;
-  }
-
-  TableCalendar _buildCalendar() {
-    return TableCalendar(
-      locale: 'ko_KR',
-      focusedDay: _focusedDay,
-      firstDay: DateTime.utc(2020, 1, 1),
-      lastDay: DateTime.utc(2030, 12, 31),
-      calendarFormat: CalendarFormat.month,
-      availableCalendarFormats: const {
-        CalendarFormat.month: ''
-      },
-      onDaySelected: (selectedDay, focusedDay) {
-        setState(() {
-          _selectedDay = selectedDay;
-          _focusedDay = focusedDay;
-        });
-      },
-      selectedDayPredicate: (day) {
-        return isSameDay(_selectedDay, day);
-      },
-      headerStyle: HeaderStyle(
-        formatButtonVisible: false,
-        titleCentered: true,
-        titleTextStyle: TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-      holidayPredicate: (day) {
-        return day.weekday == DateTime.sunday ||
-            _holidays.containsKey(day);
-      },
-      calendarBuilders: CalendarBuilders(
-        dowBuilder: (context, day) {
-          final text = DateFormat.E('ko_KR').format(day);
-
-          return Center(
-            child: Text(
-              text,
-              style: TextStyle(
-                color: day.weekday == DateTime.saturday ||
-                    day.weekday == DateTime.sunday
-                    ? Colors.red
-                    : Colors.black,
-              ),
-            ),
-          );
-        },
-        defaultBuilder: (context, date, _) {
-          return _buildCalendarCell(date, Colors.white, Colors.black);
-        },
-        selectedBuilder: (context, date, _) {
-          return _buildCalendarCell(date, Colors.blue, Colors.white);
-        },
-        holidayBuilder: (context, date, _) {
-          return _buildCalendarCell(date, Colors.redAccent, Colors.white);
-        },
-      ),
-      calendarStyle: CalendarStyle(
-        holidayTextStyle: TextStyle(color: Colors.white),
-        holidayDecoration: BoxDecoration(
-          color: Colors.redAccent,
-          shape: BoxShape.rectangle,
-          borderRadius: BorderRadius.circular(6.0),
-        ),
-        weekendTextStyle: TextStyle(color: Colors.white),
-        weekendDecoration: BoxDecoration(
-          color: Colors.grey,
-          shape: BoxShape.rectangle,
-          borderRadius: BorderRadius.circular(6.0),
-        ),
-      ),
-      onPageChanged: (focusedDay) {
-        setState(() {
-          _focusedDay = focusedDay;
-        });
-      },
-    );
-  }
-
-  Widget _buildCalendarCell(DateTime date, Color bgColor, Color textColor) {
-    return Container(
-      margin: const EdgeInsets.all(4.0),
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(6.0),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            '${date.day}',
-            style: TextStyle(
-              fontSize: 16.0,
-              color: textColor,
-            ),
-          ),
-          if (dailyAmounts.containsKey(date) && dailyAmounts[date]! > 0)
-            Text(
-              '${dailyAmounts[date]}',
-              style: TextStyle(
-                fontSize: 12,
-                color: textColor == Colors.black ? Colors.blue : textColor,
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class EmployeeProfilePictures extends StatelessWidget {
-  final List<Map<String, String>> employees = [
-    {'name': 'Employee 1', 'image': 'assets/profile_image_1.png'},
-    {'name': 'Employee 2', 'image': 'assets/profile_image_1.png'},
-    {'name': 'Employee 3', 'image': 'assets/profile_image_1.png'},
-    {'name': 'Employee 4', 'image': 'assets/profile_image_1.png'},
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: List.generate(employees.length, (index) {
-          return GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => EmployeeDetailScreen(
-                    employeeName: employees[index]['name']!,
-                    employeeImage: employees[index]['image']!,
-                  ),
-                ),
-              );
-            },
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4.0),
-              child: CircleAvatar(
-                backgroundImage: AssetImage(employees[index]['image']!),
-                radius: 20.0,
-              ),
-            ),
-          );
-        }),
-      ),
-    );
-  }
-}
-
-class NoticeSection extends StatelessWidget {
-  final PageController pageController;
-  final int currentNoticePage;
-  final List<String> notices;
-  final Function(int) onPageChanged;
-
-  NoticeSection({
-    required this.pageController,
-    required this.currentNoticePage,
-    required this.notices,
-    required this.onPageChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Color(0xFFF5F5F5),
-          borderRadius: BorderRadius.circular(10.0),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black12,
-              blurRadius: 4.0,
-              spreadRadius: 2.0,
-              offset: Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(
-                  notices.length,
-                      (index) => GestureDetector(
-                    onTap: () {
-                      pageController.jumpToPage(index);
-                      onPageChanged(index);
-                    },
-                    child: Container(
-                      width: 8.0,
-                      height: 8.0,
-                      margin: EdgeInsets.symmetric(horizontal: 2.0),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: currentNoticePage == index
-                            ? Colors.grey
-                            : Colors.black12,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            Container(
-              height: 50.0,
-              child: PageView.builder(
-                controller: pageController,
-                itemCount: notices.length,
-                onPageChanged: onPageChanged,
-                itemBuilder: (context, index) {
-                  return Center(
-                    child: Text(
-                      notices[index],
-                      style: TextStyle(color: Colors.black, fontSize: 16.0),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }

@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
@@ -10,6 +9,10 @@ import 'join_request_list.dart';
 import 'notification_detail_screen.dart';
 
 class NotificationScreen extends StatefulWidget {
+  final bool isManager;  // Add a parameter to determine if the user is a manager
+
+  NotificationScreen({required this.isManager});  // Constructor to receive the parameter
+
   @override
   _NotificationScreenState createState() => _NotificationScreenState();
 }
@@ -20,9 +23,12 @@ class _NotificationScreenState extends State<NotificationScreen> with SingleTick
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this); // 탭 길이 3으로 변경
+    _tabController = TabController(
+      length: widget.isManager ? 3 : 2,  // Show 3 tabs if the user is a manager, otherwise 2
+      vsync: this,
+    );
     _tabController!.addListener(() {
-      setState(() {}); // To update the UI when the tab changes
+      setState(() {});  // To update the UI when the tab changes
     });
   }
 
@@ -41,7 +47,7 @@ class _NotificationScreenState extends State<NotificationScreen> with SingleTick
           tabs: [
             Tab(text: '공지'),
             Tab(text: '알림'),
-            Tab(text: '입장요청'), // 입장 요청 탭 추가
+            if (widget.isManager) Tab(text: '입장요청'),  // Conditionally add the tab for managers only
           ],
           indicatorColor: Colors.blueAccent,
           labelColor: Colors.blueAccent,
@@ -55,7 +61,7 @@ class _NotificationScreenState extends State<NotificationScreen> with SingleTick
         children: [
           NotificationList(),
           AlertList(),
-          JoinRequestList(), // 입장 요청 리스트 추가
+          if (widget.isManager) JoinRequestList(),  // Conditionally add the content for managers only
         ],
       ),
       floatingActionButton: _tabController!.index == 0
@@ -181,7 +187,6 @@ class NotificationList extends StatefulWidget {
           'Authorization': 'Bearer $accessToken',
         },
       );
-      print(response.body);
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final List<dynamic> alertsJson = data['data'];

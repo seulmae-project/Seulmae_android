@@ -1,7 +1,10 @@
+import 'dart:typed_data'; // Uint8List import
 import 'package:flutter/material.dart';
-import 'package:sm3/screens/main/workplace/workplace_details_screen.dart';
+import 'package:provider/provider.dart';
+import 'package:tmfao3/screens/main/workplace/workplace_details_screen.dart';
 import 'api_workplace.dart';
 import 'detail_workplace.dart';
+import '../../../providers/auth_provider.dart';
 
 class WorkplaceEntryScreen extends StatefulWidget {
   @override
@@ -44,106 +47,128 @@ class _WorkplaceEntryScreenState extends State<WorkplaceEntryScreen> {
     _filterWorkplaces(searchQuery);
   }
 
+  Future<ImageProvider> _getImageProvider(String? url) async {
+    if (url == null) {
+      return AssetImage('assets/profile_image_1.png') as ImageProvider;
+    }
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final imageBytes = await ApiWorkplace.fetchImageWithAuth(url, authProvider.accessToken);
+    if (imageBytes != null) {
+      return MemoryImage(imageBytes);
+    } else {
+      return AssetImage('assets/profile_image_1.png') as ImageProvider;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false, // 뒤로가기 아이콘 없애기
+        appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: Row(
-          mainAxisAlignment: MainAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+        Expanded(
+        child: Container(
+        decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10.0),
+    color: Colors.grey[200],
+    ),
+    child: TextField(
+    decoration: InputDecoration(
+    hintText: '검색',
+    prefixIcon: Icon(Icons.search),
+    border: InputBorder.none,
+    contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
+    ),
+    onChanged: (value) {
+    searchQuery = value;
+    },
+    ),
+    ),
+    ),
+    IconButton(
+    icon: Icon(Icons.search),
+    onPressed: _performSearch,
+    ),
+    ],
+    ),
+    ),
+    body: FutureBuilder<List<DetailWorkplace>>(
+    future: workplaces,
+    builder: (context, snapshot) {
+    if (snapshot.connectionState == ConnectionState.waiting) {
+    return Center(child: CircularProgressIndicator());
+    } else if (snapshot.hasError) {
+    return Center(child: Text("Error: ${snapshot.error}"));
+    } else {
+    final workplacesToShow = filteredWorkplaces ?? snapshot.data!;
+
+    return ListView.builder(
+    itemCount: workplacesToShow.length,
+    itemBuilder: (context, index) {
+    DetailWorkplace detailWorkplace = workplacesToShow[index];
+    return GestureDetector(
+    onTap: () => _showWorkplaceDetails(context, detailWorkplace),
+    child: Padding(
+    padding: const EdgeInsets.all(16.0),
+    child: Row(
+    children: [
+    FutureBuilder<ImageProvider>(
+    future: _getImageProvider(detailWorkplace.workplaceThumbnailUrl),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return CircleAvatar(
+            radius: 30.0,
+            backgroundImage: AssetImage('assets/profile_image_1.png'),
+          );
+        } else if (snapshot.hasError) {
+          return CircleAvatar(
+            radius: 30.0,
+            backgroundImage: AssetImage('assets/profile_image_1.png'),
+          );
+        } else {
+          return CircleAvatar(
+            radius: 30.0,
+            backgroundImage: snapshot.data!,
+          );
+        }
+      },
+    ),
+      SizedBox(width: 16.0),
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10.0),
-                  color: Colors.grey[200],
-                ),
-                child: TextField(
-                  decoration: InputDecoration(
-                    hintText: '검색',
-                    prefixIcon: Icon(Icons.search),
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
-                  ),
-                  onChanged: (value) {
-                    searchQuery = value;
-                  },
-                ),
+            Text(
+              detailWorkplace.workplaceName,
+              style: TextStyle(
+                fontSize: 18.0,
+                fontWeight: FontWeight.bold,
               ),
             ),
-            IconButton(
-              icon: Icon(Icons.search),
-              onPressed: _performSearch,
+            SizedBox(height: 8.0),
+            Text(
+              detailWorkplace.workplaceTel ?? '',
+              style: TextStyle(fontSize: 16.0),
+            ),
+            SizedBox(height: 4.0),
+            Text(
+              "${detailWorkplace.mainAddress}, ${detailWorkplace.subAddress}",
+              style: TextStyle(fontSize: 16.0),
             ),
           ],
         ),
       ),
-      body: FutureBuilder<List<DetailWorkplace>>(
-        future: workplaces,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text("Error: ${snapshot.error}"));
-          } else {
-            final workplacesToShow = filteredWorkplaces ?? snapshot.data!;
-
-            return ListView.builder(
-              itemCount: workplacesToShow.length,
-              itemBuilder: (context, index) {
-                DetailWorkplace detailWorkplace = workplacesToShow[index];
-                return GestureDetector(
-                  onTap: () => _showWorkplaceDetails(context, detailWorkplace),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 30.0,
-                          backgroundImage: detailWorkplace.workplaceThumbnailUrl != null
-                              ? NetworkImage(detailWorkplace.workplaceThumbnailUrl!)
-                              : AssetImage('assets/profile_image_1.png') as ImageProvider,
-                          onBackgroundImageError: (error, stackTrace) {
-                            // 에러 발생 시 기본 이미지를 사용할 수 있도록 처리
-                            print('Error loading image: $error');
-                          },
-                        ),
-
-                        SizedBox(width: 16.0),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                detailWorkplace.workplaceName,
-                                style: TextStyle(
-                                  fontSize: 18.0,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-
-                              SizedBox(height: 8.0),
-                              Text(
-                                detailWorkplace.workplaceTel ?? '',
-                                style: TextStyle(fontSize: 16.0),
-                              ),
-                              SizedBox(height: 4.0),
-                              Text(
-                                "${detailWorkplace.mainAddress}, ${detailWorkplace.subAddress}",
-                                style: TextStyle(fontSize: 16.0),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            );
-          }
-        },
-      ),
+    ],
+    ),
+    ),
+    );
+    },
+    );
+    }
+    },
+    ),
     );
   }
 
@@ -155,6 +180,5 @@ class _WorkplaceEntryScreenState extends State<WorkplaceEntryScreen> {
       ),
     );
   }
-
-
 }
+

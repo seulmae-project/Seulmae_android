@@ -1,19 +1,26 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_datetime_picker_plus/flutter_datetime_picker_plus.dart' as fd_picker;
 import 'package:flutter_datetime_picker_plus/src/datetime_picker_theme.dart' as fd_theme;
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import '../../../config.dart';
+import '../../../providers/auth_provider.dart';
+import 'package:http/http.dart' as http;
 
 class RegisterWorkScreen extends StatefulWidget {
   final DateTime? checkInTime;
   final DateTime? checkOutTime;
   final int hourlyWage;
   final String workplace;
+  final int workplaceId; // Added workplaceId parameter
 
   RegisterWorkScreen({
     this.checkInTime,
     this.checkOutTime,
     required this.hourlyWage,
     required this.workplace,
+    required this.workplaceId,
   });
 
   @override
@@ -23,6 +30,7 @@ class RegisterWorkScreen extends StatefulWidget {
 class _RegisterWorkScreenState extends State<RegisterWorkScreen> {
   late DateTime _checkInTime;
   late DateTime _checkOutTime;
+  final TextEditingController _remarksController = TextEditingController();
 
   @override
   void initState() {
@@ -63,7 +71,7 @@ class _RegisterWorkScreenState extends State<RegisterWorkScreen> {
               SizedBox(height: 20.0),
               buildTextField(),
               SizedBox(height: 30.0),
-              buildSaveButton(context),
+              buildSaveButton(context, totalWage, duration.inMinutes / 60), // Update button to include parameters
             ],
           ),
         ),
@@ -234,6 +242,7 @@ class _RegisterWorkScreenState extends State<RegisterWorkScreen> {
 
   Widget buildTextField() {
     return TextField(
+      controller: _remarksController,
       maxLines: 4,
       decoration: InputDecoration(
         hintText: '전달사항을 입력해주세요',
@@ -249,27 +258,89 @@ class _RegisterWorkScreenState extends State<RegisterWorkScreen> {
     );
   }
 
-  Widget buildSaveButton(BuildContext context) {
+  Widget buildSaveButton(BuildContext context, double totalWage, double totalWorkTime) {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
-        onPressed: () {
-          // 저장 로직 추가
-          // 저장 후 특정 화면으로 이동하는 로직 추가
-          Navigator.pop(context);
-        },
+        onPressed: () => submitAttendance(context, totalWage, totalWorkTime),
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.blueAccent,
           padding: EdgeInsets.symmetric(vertical: 16.0),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
         child: Text(
           '저장',
-          style: TextStyle(fontSize: 18.0, color: Colors.white, fontWeight: FontWeight.bold),
+          style: TextStyle(fontSize: 18.0, color: Colors.white),
         ),
       ),
+    );
+  }
+
+  Future<void> submitAttendance(BuildContext context, double totalWage, double totalWorkTime) async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+    if (authProvider.isTokenExpired()) {
+      bool refreshed = await authProvider.refreshAccessToken();
+      if (!refreshed) {
+        _showMessageDialog(context, '세션을 새로 고칠 수 없습니다. 다시 로그인 해주세요.');
+        return;
+      }
+    }
+
+    final accessToken = authProvider.accessToken;
+    final requestBody = jsonEncode({
+      'workplaceId': widget.workplaceId,  // This must match the integer type expected by the API
+      'workDate': DateFormat('yyyy-MM-dd').format(_checkInTime), // Correct format for date without time
+      'workStartTime': _checkInTime.toIso8601String(),  // Correct ISO8601 format for time
+      'workEndTime': _checkOutTime.toIso8601String(),  // Correct ISO8601 format for time
+      'unconfirmedWage': totalWage.toInt(),  // Converted to integer as required
+      'totalWorkTime': totalWorkTime,  // Keep it as a double to represent hours
+    });
+
+    print('Request Body: $requestBody'); // Debugging
+
+    try {
+      final response = await http.post(
+        Uri.parse('${Config.baseUrl}/api/attendance/v1/finish'),
+        headers: {
+          'Authorization': 'Bearer $accessToken',
+          'Content-Type': 'application/json',
+        },
+        body: requestBody,
+      );
+
+      print('Response Status Code: ${response.statusCode}');
+      print('Response Body: ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        _showMessageDialog(context, '출근 정보가 성공적으로 등록되었습니다.');
+      } else {
+        _showMessageDialog(context, '출근 정보 등록에 실패했습니다: ${response.body}');
+      }
+    } catch (e) {
+      print('Error: $e');
+      _showMessageDialog(context, '출근 정보 등록 중 오류가 발생했습니다: $e');
+    }
+  }
+
+  void _showMessageDialog(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: Text('알림'),
+          content: Text(message),
+          actions: <Widget>[
+            TextButton(
+              child: Text('확인'),
+              onPressed: () {
+                Navigator.pop(dialogContext);
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }

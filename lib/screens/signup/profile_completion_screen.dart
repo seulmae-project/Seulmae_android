@@ -3,10 +3,10 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'dart:convert';
 import 'dart:io';
-import 'package:sm3/screens/signup/signup_completion_screen.dart';
+import 'package:tmfao3/screens/signup/signup_completion_screen.dart';
 import '../../config.dart';
 import 'sign_up_data.dart'; // SignUpData 클래스 파일을 import하세요.
-import 'package:sm3/services/image_picker_service.dart'; // ImagePickerService 파일을 import하세요.
+import 'package:tmfao3/services/image_picker_service.dart'; // ImagePickerService 파일을 import하세요.
 import 'package:http_parser/http_parser.dart';  // MediaType 클래스를 사용하기 위한 import
 
 class ProfileCompletionScreen extends StatefulWidget {

@@ -3,11 +3,12 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
-import 'package:sm3/screens/main/manage/workplace_employee_list.dart';
+import 'package:tmfao3/screens/main/manage/workplace_employee_list.dart';
 import '../../../config.dart';
 import '../../../providers/auth_provider.dart';
 import '../app_state.dart';
 import '../employee/employee_dashboard_screen.dart';
+import '../notification/notice_section.dart';
 import '../setting/settings_screen.dart';
 import '../workplace/workplace_entry_screen.dart';
 import '../workplace/workplace_management_screen.dart';
@@ -26,14 +27,21 @@ class ManageDashboardScreenState extends State<ManageDashboardScreen> {
   Timer? _noticeTimer;
   DateTime selectedDate = DateTime.now();
   List<dynamic> workInfoList = [];
-  List<dynamic> notices = []; // notices 데이터를 저장할 리스트
+  List<dynamic> notices = [];
 
   @override
   void initState() {
     super.initState();
     _startNoticeTimer();
-    _fetchWorkInfoList();
-    _fetchNotices(); // notices 데이터를 가져오는 함수 호출
+    _initializeData();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    WidgetsBinding.instance?.addPostFrameCallback((_) {
+      _initializeData();
+    });
   }
 
   @override
@@ -45,6 +53,7 @@ class ManageDashboardScreenState extends State<ManageDashboardScreen> {
 
   void _startNoticeTimer() {
     _noticeTimer = Timer.periodic(Duration(seconds: 7), (Timer timer) {
+      if (notices.isEmpty) return;
       setState(() {
         _currentNoticePage = (_currentNoticePage + 1) % notices.length;
       });
@@ -56,66 +65,40 @@ class ManageDashboardScreenState extends State<ManageDashboardScreen> {
     });
   }
 
-  Future<void> _fetchWorkInfoList() async {
+  Future<void> _initializeData() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final appState = Provider.of<AppState>(context, listen: false);
     final selectedWorkplaceId = authProvider.selectedWorkplaceId;
 
     if (authProvider.isTokenExpired()) {
       bool refreshed = await authProvider.refreshAccessToken();
-      print("refreshed");
-      print(refreshed);
       if (!refreshed) {
         throw Exception('Failed to refresh token');
       }
     }
 
     final accessToken = authProvider.accessToken;
+
     final String date = selectedDate.toIso8601String().split('T')[0];
-
-    final response = await http.get(
+    final workInfoResponse = await http.get(
       Uri.parse('${Config.baseUrl}/api/attendance/v1/main/manager?workplace=$selectedWorkplaceId&localDate=$date'),
-      headers: {
-        'Authorization': 'Bearer $accessToken',
-      },
+      headers: {'Authorization': 'Bearer $accessToken'},
     );
-
-    print(response.body);
-
-    if (response.statusCode == 200) {
+    if (workInfoResponse.statusCode == 200) {
       setState(() {
-        workInfoList = jsonDecode(response.body)['data'];
+        workInfoList = jsonDecode(workInfoResponse.body)['data'];
       });
     } else {
       print('Failed to load work info');
     }
-  }
 
-  // Notices 정보를 가져오는 함수
-  Future<void> _fetchNotices() async {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final selectedWorkplaceId = authProvider.selectedWorkplaceId;
-    if (authProvider.isTokenExpired()) {
-      bool refreshed = await authProvider.refreshAccessToken();
-      if (!refreshed) {
-        throw Exception('Failed to refresh token');
-      }
-    }
-
-    final accessToken = authProvider.accessToken;
-
-    final response = await http.get(
+    final noticeResponse = await http.get(
       Uri.parse('${Config.baseUrl}/api/announcement/v1/list/important?workplaceId=$selectedWorkplaceId'),
-      headers: {
-        'Authorization': 'Bearer $accessToken',
-      },
+      headers: {'Authorization': 'Bearer $accessToken'},
     );
-
-    print("response.body");
-    print(response.body);
-
-    if (response.statusCode == 200) {
+    if (noticeResponse.statusCode == 200) {
       setState(() {
-        notices = jsonDecode(response.body)['data'];
+        notices = jsonDecode(noticeResponse.body)['data'];
       });
     } else {
       print('Failed to load notices');
@@ -130,30 +113,30 @@ class ManageDashboardScreenState extends State<ManageDashboardScreen> {
     setState(() {
       selectedDate = selectedDate.subtract(Duration(days: 1));
     });
-    _fetchWorkInfoList();
+    _initializeData();
   }
 
   void _nextDay() {
     setState(() {
       selectedDate = selectedDate.add(Duration(days: 1));
     });
-    _fetchWorkInfoList();
+    _initializeData();
   }
 
   @override
   Widget build(BuildContext context) {
     final appState = Provider.of<AppState>(context);
     if (appState.selectedWorkplace.isEmpty) {
-      print(appState.selectedWorkplace);
       WorkplaceManagementScreen.fetchWorkplaces(context);
     }
-
     return WillPopScope(
       onWillPop: () async {
         DateTime now = DateTime.now();
+        if (Navigator.of(context).canPop()) {
+          return Future.value(true);
+        }
         if (appState.currentBackPressTime == null ||
-            now.difference(appState.currentBackPressTime!) >
-                Duration(seconds: 2)) {
+            now.difference(appState.currentBackPressTime!) > Duration(seconds: 2)) {
           appState.setCurrentBackPressTime(now);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('한 번 더 누르시면 앱이 종료됩니다.')),
@@ -177,7 +160,9 @@ class ManageDashboardScreenState extends State<ManageDashboardScreen> {
                   MaterialPageRoute(
                     builder: (context) => WorkplaceManagementScreen(),
                   ),
-                );
+                ).then((_) {
+                  _initializeData(); // Update data after coming back from WorkplaceManagementScreen
+                });
               },
               style: TextButton.styleFrom(
                 foregroundColor: Colors.white,
@@ -194,7 +179,7 @@ class ManageDashboardScreenState extends State<ManageDashboardScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => NotificationScreen(),
+                    builder: (context) => NotificationScreen(isManager: true),
                   ),
                 );
               },
@@ -207,8 +192,8 @@ class ManageDashboardScreenState extends State<ManageDashboardScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                WorkplaceEmployeeList(), // Added here
-                if (notices.isNotEmpty) // notices 데이터가 있을 때만 노출
+                WorkplaceEmployeeList(),
+                if (notices.isNotEmpty)
                   NoticeSection(
                     pageController: _pageController,
                     currentNoticePage: _currentNoticePage,
@@ -219,93 +204,7 @@ class ManageDashboardScreenState extends State<ManageDashboardScreen> {
                       });
                     },
                   ),
-                SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    IconButton(
-                      icon: Icon(Icons.arrow_left),
-                      onPressed: _previousDay,
-                    ),
-                    Text(
-                      "${selectedDate.toLocal()}".split(' ')[0],
-                      style: TextStyle(fontSize: 16),
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.arrow_right),
-                      onPressed: _nextDay,
-                    ),
-                  ],
-                ),
-                SizedBox(height: 8),
-                Divider(thickness: 1.5),
-                SizedBox(height: 8),
-                Text(
-                  '${selectedDate.month}월 ${selectedDate.day}일 (${_getWeekday(selectedDate.weekday)})',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey[600],
-                  ),
-                ),
-                SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Center(
-                        child: Column(
-                          children: [
-                            Text(
-                              '미완료',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                            Text(
-                              '3개',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: Center(
-                        child: Column(
-                          children: [
-                            Text(
-                              '완료',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                            Text(
-                              '1개',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 16),
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: NeverScrollableScrollPhysics(),
-                  itemCount: workInfoList.length,
-                  itemBuilder: (context, index) {
-                    final workInfo = workInfoList[index];
-                    return _buildWorkInfoCard(workInfo);
-                  },
-                ),
+                // Remaining Widgets...
               ],
             ),
           ),

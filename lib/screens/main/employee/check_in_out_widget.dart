@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import '../../../providers/auth_provider.dart';
 import 'check_in_out.dart';
 import 'register_work_screen.dart';
 
@@ -21,6 +22,8 @@ class CheckInOutWidget extends StatelessWidget {
             return Colors.lightBlue.shade100;
           }
         }
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        final selectedWorkplaceId = authProvider.selectedWorkplaceId ?? 0; // Provide a default value if null
 
         return Column(
           mainAxisSize: MainAxisSize.min,
@@ -71,6 +74,7 @@ class CheckInOutWidget extends StatelessWidget {
                 ),
               ),
             Padding(
+
               padding: const EdgeInsets.all(20.0),
               child: checkInOut.isCheckedIn
                   ? ElevatedButton(
@@ -102,6 +106,7 @@ class CheckInOutWidget extends StatelessWidget {
                             checkOutTime: checkInOut.checkOutTime,
                             hourlyWage: checkInOut.hourlyWage,
                             workplace: checkInOut.workplace,
+                            workplaceId: selectedWorkplaceId, // Convert to int if it's a string                             // Add workplaceId here
                           ),
                         ),
                       );

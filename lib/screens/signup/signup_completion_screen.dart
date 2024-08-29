@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sm3/screens/signin/login_screen.dart';
+import 'package:tmfao3/screens/signin/login_screen.dart';
 
 class SignUpCompletionScreen extends StatelessWidget {
   final String name;

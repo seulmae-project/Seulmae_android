@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.your_app_name">
+    package="com.example.tmfao3">
 
     <!-- 권한 설정 -->
     <uses-feature
@@ -15,7 +15,7 @@
 
     <!-- 네트워크 보안 설정 (HTTP 통신을 허용하기 위함) -->
     <application
-        android:label="sm3"
+        android:label="tmfao3"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:requestLegacyExternalStorage="true"

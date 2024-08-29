@@ -1,6 +1,6 @@
   import 'package:flutter/material.dart';
-  import 'package:sm3/screens/main/workplace/workplace.dart';
-  import 'package:sm3/screens/main/workplace/workplace_management_screen.dart';
+  import 'package:tmfao3/screens/main/workplace/workplace.dart';
+  import 'package:tmfao3/screens/main/workplace/workplace_management_screen.dart';
   import '../employee/employee_dashboard_screen.dart';
   import 'workplace_entry_screen.dart';
   import 'workplace_creation_screen.dart';

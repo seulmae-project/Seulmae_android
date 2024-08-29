@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sm3/providers/auth_provider.dart';
-import 'package:sm3/screens/main/role_specific_screen.dart';
-import 'package:sm3/screens/main/schedule/schedule_list_screen.dart';
-import 'package:sm3/screens/main/setting/settings_screen.dart';
-import 'package:sm3/screens/main/user_workplace_info.dart';
-import 'package:sm3/screens/main/no_workplace_screen.dart';
-import 'package:sm3/screens/main/employee/employee_dashboard_screen.dart';
-import 'package:sm3/screens/main/employee/work_status_screen.dart';
-import 'package:sm3/screens/main/manage/manage_dashboard_screen.dart';
-import 'package:sm3/screens/main/manage/work_status_manage_screen.dart';
+import 'package:tmfao3/providers/auth_provider.dart';
+import 'package:tmfao3/screens/main/schedule/schedule_list_screen.dart';
+import 'package:tmfao3/screens/main/setting/settings_screen.dart';
+import 'package:tmfao3/screens/main/user_workplace_info.dart';
+import 'package:tmfao3/screens/main/no_workplace_screen.dart';
+import 'package:tmfao3/screens/main/employee/employee_dashboard_screen.dart';
+import 'package:tmfao3/screens/main/employee/work_status_screen.dart';
+import 'package:tmfao3/screens/main/manage/manage_dashboard_screen.dart';
 import 'app_state.dart';
 
 class MainScreen extends StatefulWidget {
@@ -19,7 +17,7 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   AuthProvider? authProvider;
-  List<Widget> _screens = [];  // 클래스 필드로 선언
+  List<Widget> _screens = [];
 
   @override
   void initState() {
@@ -52,7 +50,6 @@ class _MainScreenState extends State<MainScreen> {
               ScheduleListScreen(),
               SettingsScreen(),
             ];
-            // 선택된 인덱스를 첫 번째로 설정 (필요에 따라 조정 가능)
             Provider.of<AppState>(context, listen: false).setSelectedIndex(0);
           } else {
             _screens = [
@@ -60,7 +57,6 @@ class _MainScreenState extends State<MainScreen> {
               WorkStatusScreen(),
               SettingsScreen(),
             ];
-            // 선택된 인덱스를 첫 번째로 설정 (필요에 따라 조정 가능)
             Provider.of<AppState>(context, listen: false).setSelectedIndex(0);
           }
         });

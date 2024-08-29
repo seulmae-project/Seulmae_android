@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_datetime_picker_plus/flutter_datetime_picker_plus.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
+import 'package:tmfao3/screens/main/schedule/schedule_list_screen.dart';
 import 'dart:convert';
-import 'package:flutter_datetime_picker/flutter_datetime_picker.dart';
 
 import '../../../config.dart';
 import '../../../providers/auth_provider.dart';
@@ -14,9 +15,9 @@ class ScheduleCreateScreen extends StatefulWidget {
 
 class _ScheduleCreateScreenState extends State<ScheduleCreateScreen> {
   final _titleController = TextEditingController();
-  DateTime _startTime = DateTime(0, 0, 0, 9, 0); // Use DateTime for easier manipulation
+  DateTime _startTime = DateTime(0, 0, 0, 9, 0);
   DateTime _endTime = DateTime(0, 0, 0, 13, 0);
-  final List<bool> _selectedDays = List.generate(7, (_) => false); // Represents days of the week
+  final List<bool> _selectedDays = List.generate(7, (_) => false);
   bool _isLoading = false;
 
   @override
@@ -74,7 +75,6 @@ class _ScheduleCreateScreenState extends State<ScheduleCreateScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('근무 일정 생성 실패: $e')),
       );
-      print('Error: $e');
     } finally {
       setState(() {
         _isLoading = false;
@@ -89,14 +89,27 @@ class _ScheduleCreateScreenState extends State<ScheduleCreateScreen> {
       onConfirm: (time) {
         setState(() {
           if (isStart) {
-            _startTime = time;
+            _startTime = DateTime(
+              _startTime.year,
+              _startTime.month,
+              _startTime.day,
+              time.hour,
+              time.minute,
+            );
           } else {
-            _endTime = time;
+            _endTime = DateTime(
+              _endTime.year,
+              _endTime.month,
+              _endTime.day,
+              time.hour,
+              time.minute,
+            );
           }
         });
       },
       currentTime: isStart ? _startTime : _endTime,
-      locale: LocaleType.ko, // Use Korean locale for better experience
+      locale: LocaleType.ko,
+      showSecondsColumn: false,
     );
   }
 
@@ -106,13 +119,15 @@ class _ScheduleCreateScreenState extends State<ScheduleCreateScreen> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text('성공'),
-          content: Text('근무 일정이 성공적으로 등록되었습니다.'),
+          content: Text('근무 일정이 성공적으로 저장되었습니다.'),
           actions: <Widget>[
             TextButton(
-              child: Text('확인'),
+              child: Text('OK'),
               onPressed: () {
-                Navigator.of(context).pop();
-                Navigator.of(context).pop(); // Navigate back to the previous screen
+                Navigator.of(context).pop(); // Close the dialog
+                Navigator.of(context).pop(); // Go back to the previous screen
+                // Trigger a callback or a state refresh if needed
+                // widget.onScheduleChanged(); // Uncomment if you add a callback in constructor
               },
             ),
           ],
@@ -120,6 +135,7 @@ class _ScheduleCreateScreenState extends State<ScheduleCreateScreen> {
       },
     );
   }
+
 
   @override
   Widget build(BuildContext context) {

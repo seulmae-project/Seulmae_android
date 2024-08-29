@@ -59,7 +59,6 @@ class _PhoneNumberChangeScreenState extends State<PhoneNumberChangeScreen> {
 
     try {
       final response = await http.put(url, headers: headers, body: body);
-      print(response.body);
       if (response.statusCode == 201) {
         // Success
         showDialog(

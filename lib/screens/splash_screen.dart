@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sm3/providers/auth_provider.dart';
-import 'package:sm3/screens/main/no_workplace_screen.dart';
+import 'package:tmfao3/providers/auth_provider.dart';
+import 'package:tmfao3/screens/main/no_workplace_screen.dart';
 import 'main/main_screen.dart';
 import 'main/workplace/regist_work_place.dart';
 import 'signin/login_screen.dart';

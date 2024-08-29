@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sm3/providers/auth_provider.dart';
-import 'package:sm3/screens/main/workplace/workplace_creation_screen.dart';
-import 'package:sm3/screens/main/workplace/workplace_entry_screen.dart';
+import 'package:tmfao3/providers/auth_provider.dart';
+import 'package:tmfao3/screens/main/workplace/workplace_creation_screen.dart';
+import 'package:tmfao3/screens/main/workplace/workplace_entry_screen.dart';
 import '../signin/login_screen.dart';
 import 'main_screen.dart'; // Make sure to import the MainScreen if it's in a different file.
 

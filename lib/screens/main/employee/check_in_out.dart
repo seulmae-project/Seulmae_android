@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import '../../../providers/auth_provider.dart';
 import '../app_state.dart';
 import 'employee_mock_data.dart';
 import 'register_work_screen.dart';
@@ -14,6 +15,8 @@ class CheckInOut extends ChangeNotifier {
   double progress = 0.0;
   int hourlyWage = 0;
   String workplace = '';
+  int workplaceId = 0; // Update to int if workplaceId should be an integer
+
 
   DateTime _workStartTime = DateTime.now();
   DateTime _workEndTime = DateTime.now();
@@ -41,12 +44,10 @@ class CheckInOut extends ChangeNotifier {
       );
       return;
     }
-
     _workStartTime = DateTime.parse(workTime['worktime'].split('~')[0]);
     _workEndTime = DateTime.parse(workTime['worktime'].split('~')[1]);
     hourlyWage = workTime['hourlyWage'];
     workplace = workTime['workplace'];
-
     if (now.isBefore(_workStartTime.subtract(Duration(minutes: 10)))) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -140,6 +141,7 @@ class CheckInOut extends ChangeNotifier {
                       checkOutTime: _checkOutTime,
                       hourlyWage: hourlyWage,
                       workplace: workplace,
+                      workplaceId: workplaceId, // Pass workplaceId here
                     ),
                   ),
                 );

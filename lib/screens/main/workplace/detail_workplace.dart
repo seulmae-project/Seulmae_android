@@ -8,7 +8,6 @@ class DetailWorkplace {
   String? workplaceThumbnailUrl;
   final String mainAddress;
   final String subAddress;
-
   DetailWorkplace({
     required this.workplaceId,
     required this.workplaceCode,

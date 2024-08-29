@@ -5,8 +5,10 @@ import 'dart:convert';
 
 import '../../../config.dart';
 import '../../../providers/auth_provider.dart';
+import '../app_state.dart';
 import 'schedule_create_screen.dart';
 import 'schedule_detail_screen.dart';
+import '../manage/manage_dashboard_screen.dart'; // Import the ManageDashboardScreen
 
 class ScheduleListScreen extends StatefulWidget {
   @override
@@ -19,11 +21,26 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> {
   int _size = 5;
   bool _hasMore = true;
   bool _isLoading = false;
+  ScrollController? _scrollController;
 
   @override
   void initState() {
     super.initState();
-    _fetchSchedules();
+    _scrollController = ScrollController()..addListener(_scrollListener);
+    _fetchSchedules(); // Fetch schedules initially
+  }
+
+  @override
+  void dispose() {
+    _scrollController?.removeListener(_scrollListener);
+    _scrollController?.dispose();
+    super.dispose();
+  }
+
+  void _scrollListener() {
+    if (_scrollController!.position.pixels == _scrollController!.position.maxScrollExtent) {
+      _fetchSchedules(); // Fetch more data when scrolled to the end
+    }
   }
 
   Future<void> _fetchSchedules() async {
@@ -45,7 +62,7 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        final schedulesData = data['data']['data'] as List<dynamic>?;
+        final schedulesData = data['data'] as List<dynamic>?;
 
         if (schedulesData == null || schedulesData.isEmpty) {
           setState(() {
@@ -59,68 +76,102 @@ class _ScheduleListScreenState extends State<ScheduleListScreen> {
           });
         }
       } else {
-        throw Exception('스케줄 목록 불러오기 실패');
+        throw Exception('Failed to load schedules');
       }
     } catch (e) {
-      // Handle exceptions or show an error message to the user
       print('Error: $e');
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
+  }
+
+  void _refreshSchedules() {
+    setState(() {
+      _schedules.clear();
+      _page = 0;
+      _hasMore = true;
+      _fetchSchedules();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('근무 일정 목록'),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
-        iconTheme: IconThemeData(color: Colors.black),
-        titleTextStyle: TextStyle(
-          color: Colors.black,
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
+    final appState = Provider.of<AppState>(context);
+    return WillPopScope(
+      onWillPop: () async {
+        DateTime now = DateTime.now();
+        if (Navigator.of(context).canPop()) {
+          return Future.value(true);
+        }
+        if (appState.currentBackPressTime == null ||
+            now.difference(appState.currentBackPressTime!) > Duration(seconds: 2)) {
+          appState.setCurrentBackPressTime(now);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('한 번 더 누르시면 앱이 종료됩니다.')),
+          );
+          return Future.value(false);
+        }
+        return Future.value(true);
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('근무 일정 목록'),
+          backgroundColor: Colors.white,
+          elevation: 0,
+          centerTitle: true,
+          iconTheme: IconThemeData(color: Colors.black),
+          titleTextStyle: TextStyle(
+            color: Colors.black,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+          leading: SizedBox(), // 이 줄을 추가하여 뒤로가기 아이콘 제거
         ),
-      ),
-      body: _schedules.isEmpty
-          ? Center(child: _isLoading ? CircularProgressIndicator() : Text('스케줄이 없습니다.'))
-          : ListView.builder(
-        itemCount: _schedules.length + (_hasMore ? 1 : 0),
-        itemBuilder: (context, index) {
-          if (index == _schedules.length) {
-            _fetchSchedules(); // Load more data
-            return Center(child: CircularProgressIndicator());
-          }
+        body: _schedules.isEmpty
+            ? Center(child: _isLoading ? CircularProgressIndicator() : Text('스케줄이 없습니다.'))
+            : ListView.builder(
+          controller: _scrollController,
+          itemCount: _schedules.length + (_hasMore ? 1 : 0),
+          itemBuilder: (context, index) {
+            if (index == _schedules.length) {
+              return Center(child: _isLoading ? CircularProgressIndicator() : SizedBox());
+            }
 
-          final schedule = _schedules[index];
-          return ListTile(
-            title: Text(schedule['workScheduleTitle']),
-            subtitle: Text('${schedule['startTime']} - ${schedule['endTime']}'),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ScheduleDetailScreen(scheduleId: schedule['workScheduleId']),
-                ),
-              );
-            },
-          );
-        },
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ScheduleCreateScreen(),
-            ),
-          );
-        },
-        child: Icon(Icons.add),
+            final schedule = _schedules[index];
+            return ListTile(
+              title: Text(schedule['workScheduleTitle']),
+              subtitle: Text('${schedule['startTime']} - ${schedule['endTime']}'),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ScheduleDetailScreen(
+                      scheduleId: schedule['workScheduleId'],
+                      onScheduleChanged: _refreshSchedules, // Pass the callback
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ScheduleCreateScreen(),
+              ),
+            ).then((_) {
+              _refreshSchedules(); // Refresh the list after creating a new schedule
+            });
+          },
+          child: Icon(Icons.add),
+        ),
       ),
     );
   }

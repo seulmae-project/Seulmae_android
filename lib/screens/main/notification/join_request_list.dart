@@ -39,7 +39,7 @@ class _JoinRequestListState extends State<JoinRequestList> {
         'Authorization': 'Bearer $accessToken',
       },
     );
-
+    print(response.body);
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       final List<dynamic> joinRequestsJson = data['data'];
@@ -47,6 +47,12 @@ class _JoinRequestListState extends State<JoinRequestList> {
     } else {
       throw Exception('Failed to load join requests');
     }
+  }
+
+  Future<void> _refreshJoinRequests() async {
+    setState(() {
+      _joinRequests = fetchJoinRequests();
+    });
   }
 
   @override
@@ -69,11 +75,59 @@ class _JoinRequestListState extends State<JoinRequestList> {
                 workplaceApproveId: joinRequest.workplaceApproveId,
                 userName: joinRequest.userName,
                 requestDate: joinRequest.requestDate,
+                onTap: () async {
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => JoinRequestDetailScreen(
+                        workplaceApproveId: joinRequest.workplaceApproveId,
+                        userName: joinRequest.userName,
+                        requestDate: joinRequest.requestDate,
+                      ),
+                    ),
+                  );
+
+                  if (result == true) {
+                    _refreshJoinRequests(); // 새로 고침
+                  }
+                },
               );
             }).toList(),
           );
         }
       },
+    );
+  }
+}
+
+class JoinRequestItem extends StatelessWidget {
+  final int workplaceApproveId;
+  final String userName;
+  final String requestDate;
+  final VoidCallback? onTap;
+
+  JoinRequestItem({
+    required this.workplaceApproveId,
+    required this.userName,
+    required this.requestDate,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: Colors.greenAccent,
+          child: Icon(Icons.person, color: Colors.white),
+        ),
+        title: Text(
+          userName,
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        subtitle: Text('요청 일자: $requestDate'),
+      ),
     );
   }
 }
@@ -98,43 +152,3 @@ class JoinRequestItemData {
   }
 }
 
-class JoinRequestItem extends StatelessWidget {
-  final int workplaceApproveId;
-  final String userName;
-  final String requestDate;
-
-  JoinRequestItem({
-    required this.workplaceApproveId,
-    required this.userName,
-    required this.requestDate,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => JoinRequestDetailScreen(
-              workplaceApproveId: workplaceApproveId,
-              userName: userName,
-              requestDate: requestDate,
-            ),
-          ),
-        );
-      },
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: Colors.greenAccent,
-          child: Icon(Icons.person, color: Colors.white),
-        ),
-        title: Text(
-          userName,
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        subtitle: Text('요청 일자: $requestDate'),
-      ),
-    );
-  }
-}

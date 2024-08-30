@@ -42,7 +42,7 @@ class _UpdateNotificationScreenState extends State<UpdateNotificationScreen> {
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final accessToken = authProvider.accessToken;
-    final announcementId = widget.notification['id']; // Pass the ID to update
+    final announcementId = widget.notification['announcementId'];
 
     try {
       final response = await http.put(
@@ -57,14 +57,26 @@ class _UpdateNotificationScreenState extends State<UpdateNotificationScreen> {
           'isImportant': isImportant,
         }),
       );
-        print(response.body);
-      print(jsonEncode({
-        'title': title,
-        'content': content,
-        'isImportant': isImportant,
-      }));
+
       if (response.statusCode == 200) {
-        Navigator.pop(context, true); // Notify the caller about the success
+        // Show a confirmation dialog
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text('공지사항 수정 완료'),
+            content: Text('공지사항이 성공적으로 수정되었습니다.'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop(true); // Notify that action was successful
+                },
+                child: Text('확인'),
+              ),
+            ],
+          ),
+        ).then((_) {
+          Navigator.pop(context, true); // Notify the caller about the success
+        });
       } else {
         final responseData = json.decode(response.body);
         ScaffoldMessenger.of(context).showSnackBar(

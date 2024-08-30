@@ -15,8 +15,11 @@ class _AddNotificationScreenState extends State<AddNotificationScreen> {
   String _category = '일반';
   TextEditingController _titleController = TextEditingController();
   TextEditingController _contentController = TextEditingController();
+  bool _isSubmitting = false;
 
   Future<void> _submitNotification() async {
+    if (_isSubmitting) return;
+
     final String title = _titleController.text;
     final String content = _contentController.text;
     final bool isImportant = _category == '필독';
@@ -31,14 +34,24 @@ class _AddNotificationScreenState extends State<AddNotificationScreen> {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final selectedWorkplaceId = authProvider.selectedWorkplaceId;
 
-    // Check and refresh token if expired
     if (authProvider.isTokenExpired()) {
-      bool refreshed = await authProvider.refreshAccessToken();
-      if (!refreshed) {
-        throw Exception('Failed to refresh token');
+      try {
+        bool refreshed = await authProvider.refreshAccessToken();
+        if (!refreshed) {
+          throw Exception('Failed to refresh token');
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('토큰 갱신에 실패했습니다. 다시 로그인 해주세요.')),
+        );
+        return;
       }
     }
     final accessToken = authProvider.accessToken;
+
+    setState(() {
+      _isSubmitting = true;
+    });
 
     try {
       final response = await http.post(
@@ -56,7 +69,23 @@ class _AddNotificationScreenState extends State<AddNotificationScreen> {
       );
 
       if (response.statusCode == 201) {
-        Navigator.pop(context, true); // Notify the caller about the success
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text('공지사항 추가 완료'),
+            content: Text('공지사항이 성공적으로 추가되었습니다.'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop(); // 다이얼로그 닫기
+                },
+                child: Text('확인'),
+              ),
+            ],
+          ),
+        ).then((_) {
+          Navigator.pop(context, true); // 성공 결과 반환
+        });
       } else {
         final responseData = json.decode(response.body);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -67,6 +96,10 @@ class _AddNotificationScreenState extends State<AddNotificationScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('서버와의 통신 중 오류가 발생했습니다.')),
       );
+    } finally {
+      setState(() {
+        _isSubmitting = false;
+      });
     }
   }
 
@@ -129,7 +162,7 @@ class _AddNotificationScreenState extends State<AddNotificationScreen> {
             ),
             Spacer(),
             ElevatedButton(
-              onPressed: _submitNotification,
+              onPressed: _isSubmitting ? null : _submitNotification,
               child: Text('저장'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blueAccent,

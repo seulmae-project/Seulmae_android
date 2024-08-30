@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
-import 'package:tmfao3/screens/main/manage/workplace_employee_list.dart';
 import '../../../config.dart';
 import '../../../providers/auth_provider.dart';
 import '../app_state.dart';
@@ -13,6 +12,7 @@ import '../setting/settings_screen.dart';
 import '../workplace/workplace_entry_screen.dart';
 import '../workplace/workplace_management_screen.dart';
 import '../notification/notification_screen.dart';
+import 'workplace_employee_list.dart'; // Ensure this import is correct
 
 class ManageDashboardScreen extends StatefulWidget {
   const ManageDashboardScreen({Key? key}) : super(key: key);
@@ -105,6 +105,10 @@ class ManageDashboardScreenState extends State<ManageDashboardScreen> {
     }
   }
 
+  Future<void> _refreshData() async {
+    await _initializeData();
+  }
+
   void _onApprove(int attendanceRequestHistoryId) {
     print("승인 처리 ID: $attendanceRequestHistoryId");
   }
@@ -181,31 +185,43 @@ class ManageDashboardScreenState extends State<ManageDashboardScreen> {
                   MaterialPageRoute(
                     builder: (context) => NotificationScreen(isManager: true),
                   ),
-                );
+                ).then((_) {
+                  _refreshData(); // Refresh the data after returning from NotificationScreen
+                });
               },
             ),
           ],
         ),
-        body: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                WorkplaceEmployeeList(),
-                if (notices.isNotEmpty)
-                  NoticeSection(
-                    pageController: _pageController,
-                    currentNoticePage: _currentNoticePage,
-                    notices: notices.map((notice) => notice['title'] as String).toList(),
-                    onPageChanged: (index) {
-                      setState(() {
-                        _currentNoticePage = index;
-                      });
-                    },
-                  ),
-                // Remaining Widgets...
-              ],
+        body: RefreshIndicator(
+          onRefresh: _refreshData,
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  WorkplaceEmployeeList(),
+                  if (notices.isNotEmpty)
+                    NoticeSection(
+                      pageController: _pageController,
+                      currentNoticePage: _currentNoticePage,
+                      notices: notices.map((notice) => notice['title'] as String).toList(),
+                      onPageChanged: (index) {
+                        setState(() {
+                          _currentNoticePage = index;
+                        });
+                      },
+                    )
+                  else
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16.0),
+                      child: Center(
+                        child: Text('등록된 공지사항이 없습니다.'),
+                      ),
+                    ),
+                  // Remaining Widgets...
+                ],
+              ),
             ),
           ),
         ),

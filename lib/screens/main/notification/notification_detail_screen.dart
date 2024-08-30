@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
-import 'package:tmfao3/screens/main/notification/update_notification_screen.dart';
 import 'dart:convert';
 
 import '../../../config.dart';
 import '../../../providers/auth_provider.dart';
 import '../user_workplace_info.dart';
 import 'delete_notification_screen.dart';
+import 'update_notification_screen.dart';
+
 class NotificationDetailScreen extends StatelessWidget {
   final String id;
 
   NotificationDetailScreen({required this.id});
 
-  Future<Map<String, dynamic>> fetchNotificationDetail(BuildContext context) async {
+  Future<Map<String, dynamic>> fetchNotificationDetail(
+      BuildContext context) async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     if (authProvider.isTokenExpired()) {
       bool refreshed = await authProvider.refreshAccessToken();
@@ -40,9 +42,9 @@ class NotificationDetailScreen extends StatelessWidget {
 
   Future<bool> checkIfUserIsManager(BuildContext context) async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    UserWorkplaceInfo? workplaceInfo = await authProvider.fetchUserWorkplaceInfo(authProvider.selectedWorkplaceId);
+    UserWorkplaceInfo? workplaceInfo = await authProvider
+        .fetchUserWorkplaceInfo(authProvider.selectedWorkplaceId);
 
-    // Check if workplaceInfo is null before accessing its properties
     if (workplaceInfo != null) {
       return workplaceInfo.isManager;
     } else {
@@ -72,18 +74,19 @@ class NotificationDetailScreen extends StatelessWidget {
             return FutureBuilder<bool>(
               future: checkIfUserIsManager(context),
               builder: (context, managerSnapshot) {
-                if (managerSnapshot.connectionState == ConnectionState.waiting) {
+                if (managerSnapshot.connectionState ==
+                    ConnectionState.waiting) {
                   return Center(child: CircularProgressIndicator());
                 } else if (managerSnapshot.hasError) {
                   return Center(child: Text('오류 발생: ${managerSnapshot.error}'));
                 } else if (!managerSnapshot.hasData) {
                   return Center(child: Text('근무지 정보가 없습니다.'));
                 } else {
-                  final isManager = managerSnapshot.data ?? false; // Provide a default value if data is null
+                  final isManager = managerSnapshot.data ?? false;
                   return Stack(
                     children: [
                       Padding(
-                        padding: const EdgeInsets.only(bottom: 80.0), // Space for the buttons at the bottom
+                        padding: const EdgeInsets.only(bottom: 80.0),
                         child: SingleChildScrollView(
                           child: Padding(
                             padding: const EdgeInsets.all(16.0),
@@ -99,7 +102,8 @@ class NotificationDetailScreen extends StatelessWidget {
                                 ),
                                 SizedBox(height: 8.0),
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment: MainAxisAlignment
+                                      .spaceBetween,
                                   children: [
                                     Text(
                                       '등록일: ${notification['regDate']}',
@@ -145,16 +149,14 @@ class NotificationDetailScreen extends StatelessWidget {
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (context) => UpdateNotificationScreen(notification: notification),
+                                        builder: (context) =>
+                                            UpdateNotificationScreen(
+                                                notification: notification),
                                       ),
                                     ).then((result) {
                                       if (result == true) {
-                                        // Refresh the notification details after update
-                                        Navigator.of(context).pushReplacement(
-                                          MaterialPageRoute(
-                                            builder: (context) => NotificationDetailScreen(id: id),
-                                          ),
-                                        );
+                                        Navigator.pop(context,
+                                            true); // Notify the caller to refresh
                                       }
                                     });
                                   },
@@ -162,8 +164,9 @@ class NotificationDetailScreen extends StatelessWidget {
                                   label: Text('수정'),
                                   style: ElevatedButton.styleFrom(
                                     foregroundColor: Colors.white,
-                                    backgroundColor: Colors.green, // Green color for edit
-                                    padding: EdgeInsets.symmetric(vertical: 16.0), // Padding
+                                    backgroundColor: Colors.green,
+                                    padding: EdgeInsets.symmetric(
+                                        vertical: 16.0),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(8.0),
                                     ),
@@ -176,38 +179,22 @@ class NotificationDetailScreen extends StatelessWidget {
                                   onPressed: () async {
                                     bool? confirm = await showDialog<bool>(
                                       context: context,
-                                      builder: (context) => DeleteNotificationScreen(id: id),
+                                      builder: (context) =>
+                                          DeleteNotificationScreen(id: id),
                                     );
 
                                     if (confirm == true) {
-                                      // Show a success dialog and then go back to previous screen
-                                      showDialog(
-                                        context: context,
-                                        builder: (BuildContext context) {
-                                          return AlertDialog(
-                                            title: Text('삭제 완료'),
-                                            content: Text('공지사항이 성공적으로 삭제되었습니다.'),
-                                            actions: [
-                                              TextButton(
-                                                onPressed: () {
-                                                  Navigator.of(context).pop(); // Close the dialog
-                                                },
-                                                child: Text('확인'),
-                                              ),
-                                            ],
-                                          );
-                                        },
-                                      ).then((_) {
-                                        Navigator.of(context).pop(true); // Indicate that the list should be refreshed
-                                      });
+                                      Navigator.pop(context,
+                                          true); // Notify the caller to refresh
                                     }
                                   },
                                   icon: Icon(Icons.delete, color: Colors.white),
                                   label: Text('삭제'),
                                   style: ElevatedButton.styleFrom(
                                     foregroundColor: Colors.white,
-                                    backgroundColor: Colors.red, // Red color for delete
-                                    padding: EdgeInsets.symmetric(vertical: 16.0), // Padding
+                                    backgroundColor: Colors.red,
+                                    padding: EdgeInsets.symmetric(
+                                        vertical: 16.0),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(8.0),
                                     ),

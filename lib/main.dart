@@ -45,7 +45,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),  // Auth provider
-        ChangeNotifierProvider(create: (_) => AppState()),  // App state provider
+        ChangeNotifierProvider(create: (_) => AppState()),  // App state providerㅗ
       ],
       child: MaterialApp(
         home: SplashScreen(),  // Initial screen to display

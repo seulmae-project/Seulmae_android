@@ -201,25 +201,7 @@ class ManageDashboardScreenState extends State<ManageDashboardScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   WorkplaceEmployeeList(),
-                  if (notices.isNotEmpty)
-                    NoticeSection(
-                      pageController: _pageController,
-                      currentNoticePage: _currentNoticePage,
-                      notices: notices.map((notice) => notice['title'] as String).toList(),
-                      onPageChanged: (index) {
-                        setState(() {
-                          _currentNoticePage = index;
-                        });
-                      },
-                    )
-                  else
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 16.0),
-                      child: Center(
-                        child: Text('등록된 공지사항이 없습니다.'),
-                      ),
-                    ),
-                  // Remaining Widgets...
+                  _buildNoticeSection(), // Modified to use a separate method
                 ],
               ),
             ),
@@ -228,7 +210,35 @@ class ManageDashboardScreenState extends State<ManageDashboardScreen> {
       ),
     );
   }
-
+  Widget _buildNoticeSection() {
+    if (notices.isEmpty) {
+      return Container(
+        margin: const EdgeInsets.symmetric(vertical: 10.0),
+        padding: const EdgeInsets.all(10.0),
+        decoration: BoxDecoration(
+          color: Colors.grey[200],
+          borderRadius: BorderRadius.circular(8.0),
+        ),
+        child: Center(
+          child: Text(
+            '등록된 공지사항이 없습니다',
+            style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+          ),
+        ),
+      );
+    } else {
+      return NoticeSection(
+        pageController: _pageController,
+        currentNoticePage: _currentNoticePage,
+        notices: notices.map((notice) => notice['title'] as String).toList(),
+        onPageChanged: (index) {
+          setState(() {
+            _currentNoticePage = index;
+          });
+        },
+      );
+    }
+  }
   Widget _buildWorkInfoCard(Map<String, dynamic> workInfo) {
     String name = workInfo['userName'];
     String totalHours = workInfo['totalWorkTime'].toString() + '시간';

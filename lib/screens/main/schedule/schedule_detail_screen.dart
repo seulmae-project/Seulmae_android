@@ -171,9 +171,11 @@ class _ScheduleDetailScreenState extends State<ScheduleDetailScreen> {
                         MaterialPageRoute(
                           builder: (context) => ScheduleUpdateScreen(scheduleId: widget.scheduleId),
                         ),
-                      ).then((_) {
-                        // Refresh the schedule list after returning from the update screen
-                        widget.onScheduleChanged();
+                      ).then((isUpdated) {
+                        if (isUpdated == true) {
+                          _fetchScheduleDetails(); // Refresh the schedule details
+                          widget.onScheduleChanged(); // Notify the parent that the schedule has been changed
+                        }
                       });
                     },
                     child: Text('일정 수정'),

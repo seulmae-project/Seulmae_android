@@ -170,7 +170,7 @@ class _ScheduleUpdateScreenState extends State<ScheduleUpdateScreen> {
               child: Text('OK'),
               onPressed: () {
                 Navigator.of(context).pop(); // Close the dialog
-                Navigator.of(context).pop(); // Go back to the previous screen
+                Navigator.of(context).pop(true); // Go back to the previous screen
                 // Trigger a callback or a state refresh if needed
                 // widget.onScheduleChanged(); // Uncomment if you add a callback in constructor
               },

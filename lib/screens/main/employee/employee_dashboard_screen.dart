@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:provider/provider.dart';
-import 'package:intl/intl.dart';  // intl 패키지 import 추가
+import 'package:intl/intl.dart'; // intl package import 추가
 import '../employee_detail_screen.dart';
 import '../manage/workplace_employee_list.dart';
 import '../notification/notice_section.dart';
@@ -13,14 +13,6 @@ import '../app_state.dart';
 import '../workplace/workplace_management_screen.dart';
 import 'check_in_out.dart';
 import 'check_in_out_widget.dart';
-
-final List<String> notices = [
-  '공지사항 1',
-  '공지사항 2',
-  '공지사항 3',
-];
-
-
 
 final Map<DateTime, int> dailyAmounts = {
   DateTime.utc(2024, 8, 1): 20000,
@@ -42,8 +34,7 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
   PageController _pageController = PageController();
   int _currentNoticePage = 0;
   Timer? _noticeTimer;
-
-  get workplaces => null;
+  List<dynamic> notices = [];
 
   @override
   void initState() {
@@ -59,7 +50,8 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
   }
 
   void _startNoticeTimer() {
-    _noticeTimer = Timer.periodic(Duration(seconds: 10), (Timer timer) {
+    _noticeTimer = Timer.periodic(Duration(seconds: 7), (Timer timer) {
+      if (notices.isEmpty) return;
       setState(() {
         _currentNoticePage = (_currentNoticePage + 1) % notices.length;
       });
@@ -86,24 +78,12 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
           body: Column(
             children: <Widget>[
               WorkplaceEmployeeList(),
-              NoticeSection(
-                pageController: _pageController,
-                currentNoticePage: _currentNoticePage,
-                notices: notices,
-                onPageChanged: (index) {
-                  setState(() {
-                    _currentNoticePage = index;
-                  });
-                },
-              ),
+              _buildNoticeSection(), // Modified to use a separate method
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8.0),
                   child: Container(
-                    height: MediaQuery
-                        .of(context)
-                        .size
-                        .height * 0.4,
+                    height: MediaQuery.of(context).size.height * 0.4,
                   ),
                 ),
               ),
@@ -116,6 +96,36 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildNoticeSection() {
+    if (notices.isEmpty) {
+      return Container(
+        margin: const EdgeInsets.symmetric(vertical: 10.0),
+        padding: const EdgeInsets.all(10.0),
+        decoration: BoxDecoration(
+          color: Colors.grey[200],
+          borderRadius: BorderRadius.circular(8.0),
+        ),
+        child: Center(
+          child: Text(
+            '등록된 공지사항이 없습니다',
+            style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+          ),
+        ),
+      );
+    } else {
+      return NoticeSection(
+        pageController: _pageController,
+        currentNoticePage: _currentNoticePage,
+        notices: notices.map((notice) => notice['title'] as String).toList(),
+        onPageChanged: (index) {
+          setState(() {
+            _currentNoticePage = index;
+          });
+        },
+      );
+    }
   }
 
   AppBar _buildAppBar(BuildContext context, AppState appState) {
@@ -131,8 +141,7 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) =>
-                    WorkplaceManagementScreen(),
+                builder: (context) => WorkplaceManagementScreen(),
               ),
             );
           },
